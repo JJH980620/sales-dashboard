@@ -304,6 +304,7 @@
       <button class="btn ghost" onclick="exportJSON()">导出配置</button>
       <button class="btn ghost" onclick="importJSON()">导入配置</button>
       <button class="btn ghost" onclick="loadExample()">载入示例</button>
+      <button class="btn ghost" onclick="resolveOverlaps()">整理布局</button>
       <button class="btn ghost" onclick="resetAll()">重置</button>
     </div>
   </div>
@@ -635,6 +636,26 @@ function drawCharts(){ if(typeof echarts==="undefined"){ document.querySelectorA
   document.querySelectorAll("[data-chart-gantt]").forEach(el=>{ const w=currentDash().widgets.find(x=>x.id===el.dataset.chartGantt); if(!w)return; const s=getSource(w.sourceId); if(!s)return; const inst=echarts.init(el); _charts.push(inst); inst.setOption(buildGanttOption(w,s)); }); }
 
 /* ================= 拖拽 ================= */
+function overlaps(a,b){ return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y; }
+function resolveOverlaps(){
+  const ws=currentDash().widgets.filter(w=>!w.hidden);
+  let guard=0, movedAny=false;
+  while(guard<100){
+    guard++; let moved=false;
+    for(let i=0;i<ws.length;i++) for(let j=i+1;j<ws.length;j++){
+      const a=ws[i], b=ws[j];
+      if(overlaps(a,b)){
+        const lower=(a.y<=b.y)?b:a, upper=(a.y<=b.y)?a:b;
+        const ny=Math.max(lower.y, upper.y+upper.h+GAP);
+        if(ny!==lower.y){ lower.y=Math.round(ny/GRID)*GRID; moved=true; movedAny=true; }
+      }
+    }
+    if(!moved) break;
+  }
+  updateCanvasHeight(); saveState(); render();
+  if(movedAny) toast("\u5df2\u81ea\u52a8\u6574\u7406\u7ec4\u4ef6\u5e03\u5c40\uff0c\u89e3\u9664\u5806\u53e0");
+  else if(arguments.length===0) toast("\u5f53\u524d\u5e03\u5c40\u65e0\u5806\u53e0");
+}
 function initDnD(){
   // 拖拽移动（标题栏）
   document.querySelectorAll(".module-bar").forEach(bar=>{
@@ -647,7 +668,7 @@ function initDnD(){
       const sx=e.clientX,sy=e.clientY,ox=w.x,oy=w.y;
       mod.classList.add("dragging");
       function onMove(ev){ const x=Math.max(0,Math.round((ox+ev.clientX-sx)/GRID)*GRID); const y=Math.max(0,Math.round((oy+ev.clientY-sy)/GRID)*GRID); mod.style.left=x+"px"; mod.style.top=y+"px"; mod._dx=x; mod._dy=y; }
-      function onUp(){ document.removeEventListener("pointermove",onMove); document.removeEventListener("pointerup",onUp); mod.classList.remove("dragging"); if(mod._dx!==undefined){ w.x=mod._dx; w.y=mod._dy; delete mod._dx; delete mod._dy; updateCanvasHeight(); saveState(); } }
+      function onUp(){ document.removeEventListener("pointermove",onMove); document.removeEventListener("pointerup",onUp); mod.classList.remove("dragging"); if(mod._dx!==undefined){ w.x=mod._dx; w.y=mod._dy; delete mod._dx; delete mod._dy; resolveOverlaps(true); } }
       document.addEventListener("pointermove",onMove);
       document.addEventListener("pointerup",onUp);
     });
@@ -662,7 +683,7 @@ function initDnD(){
       const sx=e.clientX,sy=e.clientY,ow=w.w,oh=w.h;
       mod.classList.add("dragging");
       function onMove(ev){ const nw=Math.max(MINW,Math.round((ow+ev.clientX-sx)/GRID)*GRID); const nh=Math.max(MINH,Math.round((oh+ev.clientY-sy)/GRID)*GRID); mod.style.width=nw+"px"; mod.style.height=nh+"px"; mod._nw=nw; mod._nh=nh; }
-      function onUp(){ document.removeEventListener("pointermove",onMove); document.removeEventListener("pointerup",onUp); mod.classList.remove("dragging"); if(mod._nw){ w.w=mod._nw; w.h=mod._nh; delete mod._nw; delete mod._nh; updateCanvasHeight(); saveState(); } }
+      function onUp(){ document.removeEventListener("pointermove",onMove); document.removeEventListener("pointerup",onUp); mod.classList.remove("dragging"); if(mod._nw){ w.w=mod._nw; w.h=mod._nh; delete mod._nw; delete mod._nh; resolveOverlaps(true); } }
       document.addEventListener("pointermove",onMove);
       document.addEventListener("pointerup",onUp);
     });
