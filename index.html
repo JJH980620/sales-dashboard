@@ -212,6 +212,17 @@
 
 
 
+
+  /* 标题/分隔线组件 */
+  .divider-mod{width:100%;height:100%;display:flex;align-items:center;gap:12px;padding:0 6px;}
+  .divider-mod .dv-bar{width:6px;height:28px;border-radius:3px;flex-shrink:0;}
+  .divider-mod .dv-title{font-size:18px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .divider-mod .dv-line{flex:1;height:1px;background:var(--line);}
+  /* 词云图 */
+  .wc-mod{width:100%;height:100%;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;padding:12px;}
+  .wc-mod .wc-word{font-weight:700;cursor:default;transition:.15s;line-height:1;}
+  .wc-mod .wc-word:hover{transform:scale(1.1);}
+
   /* 图片/按钮/进度图组件 */
   .img-mod{width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:8px;}
   .img-mod img{max-width:100%;max-height:100%;border-radius:8px;}
@@ -281,6 +292,7 @@
       <button class="btn" onclick="openSources()">数据源管理</button>
       <button class="btn" onclick="openWidgets()">组件管理</button>
       <button class="btn primary" onclick="addWidgetMenu()">+ 添加组件</button>
+      <button class="btn" onclick="openDashSettings()">看板设置</button>
       <button class="btn" onclick="toggleFilterBar()">筛选</button>
       <button class="btn" onclick="toggleTheme()">主题</button>
       <button class="btn" onclick="exportImage()">导出图片</button>
@@ -342,6 +354,21 @@
   </div>
 </div>
 
+<div class="modal-mask hidden" id="dashSetModal">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-head"><h3>看板设置</h3><span class="x" onclick="closeModal('dashSetModal')">&times;</span></div>
+    <div class="modal-body">
+      <div class="f-label">看板标题</div>
+      <div class="cfg-row"><input id="dsTitle" placeholder="看板标题" style="flex:1"></div>
+      <div class="f-label">副标题</div>
+      <div class="cfg-row"><input id="dsSub" placeholder="副标题" style="flex:1"></div>
+      <div class="f-label">背景色</div>
+      <div class="cfg-row"><input id="dsBg" type="color" style="width:50px;height:34px;padding:2px;border:1px solid var(--line);border-radius:8px"><span style="font-size:12px;color:var(--sub)">选择背景色（默认为系统主题）</span></div>
+    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('dashSetModal')">取消</button><button class="btn primary" onclick="saveDashSettings()">保存</button></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -355,11 +382,11 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;",
 function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2200); }
 const AGGS=["sum","avg","count","max","min"];
 const COLORS=["blue","green","gray","purple","teal","orange","pink","red"];
-const TYPE_LABEL={kpi:"KPI 指标卡组",cards:"多指标卡片组",rank:"排行榜",table:"明细表",stat:"统计数字卡",text:"文本模块",chart:"图表",gauge:"仪表盘/进度环",metric:"指标板",image:"图片",button:"按钮",progress:"进度图"};
+const TYPE_LABEL={kpi:"KPI 指标卡组",cards:"多指标卡片组",rank:"排行榜",table:"明细表",stat:"统计数字卡",text:"文本模块",chart:"图表",gauge:"仪表盘/进度环",metric:"指标板",image:"图片",button:"按钮",progress:"进度图",wordcloud:"词云图",divider:"标题/分隔线"};
 const CHART_TYPES=["bar","barH","stackBar","line","area","pie","doughnut","funnel","radar","scatter"];
 const LS_KEY="dashBuilder_v4";
 const CANVAS_W=1200, GRID=10, GAP=16, MINW=200, MINH=120;
-const DEF_SIZE={kpi:[1200,190],cards:[1200,420],rank:[590,360],table:[1200,320],stat:[320,170],text:[1200,130],chart:[590,380],gauge:[590,380],metric:[590,320],image:[400,300],button:[240,120],progress:[590,180]};
+const DEF_SIZE={kpi:[1200,190],cards:[1200,420],rank:[590,360],table:[1200,320],stat:[320,170],text:[1200,130],chart:[590,380],gauge:[590,380],metric:[590,320],image:[400,300],button:[240,120],progress:[590,180],wordcloud:[590,360],divider:[590,80]};
 
 /* ================= 状态 ================= */
 function autoLayout(widgets){
@@ -427,7 +454,7 @@ function openDashMenu(e,id){ document.querySelectorAll(".menu").forEach(m=>m.rem
 function render(){
   disposeCharts();
   const dash=currentDash();
-  document.getElementById("appTitle").textContent=state.title||"通用数据看板";
+  if(state.bg)document.body.style.background=state.bg; document.getElementById("appTitle").textContent=state.title||"通用数据看板";
   document.getElementById("appSub").textContent=(dash?dash.name:"")+(state.sub?" · "+state.sub:"");
   renderTabs();
   const canvas=document.getElementById("canvas");
@@ -442,6 +469,7 @@ function render(){
           <span class="vis-btn" title="显示/隐藏" onclick="toggleWidgetVis('${w.id}')">${w.hidden?'&#128065;&#8205;&#8204;':'&#128065;'}</span>
           <button class="btn" title="上移" onclick="moveWidget('${w.id}',-1)">&#9650;</button>
           <button class="btn" title="下移" onclick="moveWidget('${w.id}',1)">&#9660;</button>
+          <button class="btn" title="复制" onclick="dupWidget('${w.id}')">复制</button>
           <button class="btn" onclick="editWidget('${w.id}')">配置</button>
           <button class="btn" onclick="delWidget('${w.id}')">删除</button>
         </span>
@@ -455,6 +483,7 @@ function render(){
 }
 function updateCanvasHeight(){ const canvas=document.getElementById("canvas"); let max=420; currentDash().widgets.forEach(w=>{ max=Math.max(max,w.y+w.h+GAP); }); canvas.style.height=max+"px"; }
 function renderWidget(w){
+  _curWidget=w;
   const s=getSource(w.sourceId);
   if(!s){ return '<div class="empty">数据源已删除，请重新配置组件。</div>'; }
   switch(w.type){
@@ -465,6 +494,8 @@ function renderWidget(w){
     case "image": return renderImage(w);
     case "button": return renderButton(w);
     case "progress": return renderProgress(w,s);
+    case "wordcloud": return renderWordCloud(w,s);
+    case "divider": return renderDivider(w);
   }
   return "";
 }
@@ -475,6 +506,8 @@ function fmtNum(v,c){ const dec=(c&&c.decimals!==undefined&&c.decimals!==null)?c
 function renderImage(w){ const c=w.config||{}; if(!c.url) return '<div class="empty">请配置图片地址</div>'; return `<div class="img-mod"><img src="${esc(c.url)}" style="object-fit:${c.fit||"contain"}" alt="图片"></div>`; }
 function renderButton(w){ const c=w.config||{}; const txt=esc(c.text||"按钮"); const col=c.color||"blue"; const style=`background:var(--${col})`; let a=c.action==="link"&&c.link?`href="${esc(c.link)}" target="_blank"`:`href="javascript:void(0)" onclick="toast('\u6309\u94ae '+this.textContent+' \u88ab\u70b9\u51fb')"`; return `<div class="btn-mod"><a ${a} style="${style}">${txt}</a></div>`; }
 function renderProgress(w,s){ const c=w.config||{}; let valPct,display; if(c.kind==="ratio"&&c.numId&&c.denId){ const v=ratioTotal(s,{numId:c.numId,denId:c.denId}); valPct=Math.min(Math.max(v*100,0),100); display=(Math.round(v*1000)/10)+"%"; } else { const v=fieldAgg(s,c.fieldId,c.aggregate); const max=c.max||100; valPct=Math.min(Math.max(v/max*100,0),100); display=(Math.round(v*100)/100)+(c.suffix||""); } const col=c.color||"blue"; return `<div class="prog-mod"><div class="pg-row"><span class="pg-lab">${esc(c.label||"进度")}</span><span class="pg-val" style="color:var(--${col})">${esc(display)}</span></div><div class="bar bar-${col}"><i style="width:${valPct}%"></i></div></div>`; }
+function renderDivider(w){ const c=w.config||{}; const col=c.color||"blue"; return `<div class="divider-mod"><span class="dv-bar" style="background:var(--${col})"></span><span class="dv-title">${esc(c.title||"标题")}</span><span class="dv-line"></span></div>`; }
+function renderWordCloud(w,s){ const c=w.config||{}; const rows=getFilteredRows(s); const tfid=c.textFieldId, vfid=c.valueFieldId; if(!tfid) return '<div class="empty">请配置文本字段</div>'; const map={},order=[]; rows.forEach(r=>{ const k=String(r[tfid]??""); if(!k) return; const v=vfid?num(r[vfid]):1; if(!(k in map)){map[k]=0;order.push(k);} map[k]+=v; }); const items=order.map(k=>({k,v:map[k]})); const maxV=Math.max(...items.map(i=>i.v),1); const palette=["#3b82f6","#22c55e","#f59e0b","#a855f7","#14b8a6","#ec4899","#ef4444","#9aa7b5"]; const html=items.map((it,i)=>{ const fs=14+Math.round((it.v/maxV)*30); const col=palette[i%palette.length]; const rot=(i%3===0)?(-12):(i%3===1?8:0); return `<span class="wc-word" style="font-size:${fs}px;color:${col};transform:rotate(${rot}deg)" title="${esc(it.k)}">${esc(it.k)}</span>`; }).join(""); return `<div class="wc-mod">${html||'<div class="empty">无数据</div>'}</div>`; }
 function renderCards(w,s){
   const g=w.config.groupFieldId,rows=getFilteredRows(s);
   if(!rows.length)return '<div class="empty">该数据源暂无数据。</div>';
@@ -560,11 +593,11 @@ function toggleTableSort(wid,fid){ const cur=tableSortState[wid]; tableSortState
 let _charts=[];
 function disposeCharts(){ _charts.forEach(c=>{try{c.dispose();}catch(e){}}); _charts=[]; }
 function groupByField(s,xFieldId,valueIds){ const map={},order=[]; const rows=getFilteredRows(s); for(const r of rows){ const key=String(r[xFieldId]??""); if(!(key in map)){ map[key]=valueIds.map(()=>0); order.push(key);} valueIds.forEach((fid,i)=>{ map[key][i]+=num(r[fid]); }); } return {labels:order,series:valueIds.map((fid,i)=>order.map(k=>map[k][i]))}; }
-function buildChartOption(w,s){ const c=w.config,valueIds=(c.valueFieldIds||[]).filter(Boolean),gt=c.chartType; const palette=["#3b82f6","#22c55e","#f59e0b","#a855f7","#14b8a6","#ec4899","#ef4444","#9aa7b5"];
+function buildChartOption(w,s){ _curWidget=w; const c=w.config,valueIds=(c.valueFieldIds||[]).filter(Boolean),gt=c.chartType; const palette=["#3b82f6","#22c55e","#f59e0b","#a855f7","#14b8a6","#ec4899","#ef4444","#9aa7b5"];
   if(gt==="pie"||gt==="doughnut"){ const gb=groupByField(s,c.xFieldId,valueIds.slice(0,1)); return {tooltip:{trigger:"item",formatter:"{b}: {c} ({d}%)"},legend:{bottom:0,show:c.legend!==false},series:[{type:"pie",radius:gt==="doughnut"?["42%","68%"]:"72%",data:gb.labels.map((l,i)=>({name:l,value:gb.series[0][i]})),color:c.themeColor?[COLOR_HEX[c.themeColor],"#22c55e","#f59e0b","#a855f7","#14b8a6","#ec4899","#ef4444","#9aa7b5"]:palette}]}; }
   if(gt==="radar"){ const allMax=Math.max(...s.rows.map(r=>Math.max(...valueIds.map(f=>num(r[f])))),1); return {tooltip:{},legend:{bottom:0},radar:{indicator:valueIds.map(fid=>({name:fieldName(s,fid),max:allMax}))},series:[{type:"radar",data:[{value:valueIds.map(fid=>fieldAgg(s,fid,"sum")),areaStyle:{}}],color:palette}]}; }
   if(gt==="funnel"){ const gb=groupByField(s,c.xFieldId,valueIds.slice(0,1)); const data=gb.labels.map((l,i)=>({name:l,value:gb.series[0][i]})).sort((a,b)=>b.value-a.value); return {tooltip:{trigger:"item",formatter:"{b}: {c}"},series:[{type:"funnel",left:"15%",width:"70%",data,color:palette}]}; }
-  const gb=groupByField(s,c.xFieldId,valueIds); const isStack=gt==="stackBar"; const series=valueIds.map((fid,i)=>{ const base={name:fieldName(s,fid),type:(gt==="bar"||gt==="barH"||gt==="stackBar")?"bar":"line",data:gb.series[i],itemStyle:{color:palette[i%palette.length]}}; if(isStack){base.stack="total";base.barMaxWidth=30;} if(gt==="area"){base.areaStyle={opacity:.25};} if(gt==="line"||gt==="area"){base.lineStyle={color:palette[i%palette.length]};} return base; });
+  const gb=groupByField(s,c.xFieldId,valueIds); const isStack=gt==="stackBar"; const series=valueIds.map((fid,i)=>{ const base={name:fieldName(s,fid),type:(gt==="bar"||gt==="barH"||gt==="stackBar")?"bar":"line",data:gb.series[i],itemStyle:{color:palette[i%palette.length]}}; if(isStack){base.stack="total";base.barMaxWidth=30;} if(gt==="area"){base.areaStyle={opacity:.25};} if(gt==="line"||gt==="area"){base.lineStyle={color:palette[i%palette.length]};} if(c.showLabel){base.label={show:true,position:gt==="barH"?"right":"top"};} return base; });
   if(gt==="scatter"){ const rows=getFilteredRows(s); const data=rows.map(r=>[ c.xFieldId&&r[c.xFieldId]!==undefined?num(r[c.xFieldId]):0, valueIds[0]?num(r[valueIds[0]]):0 ]); return {tooltip:{trigger:"item",formatter:"({c0}, {c1})"},xAxis:{type:"value",name:c.xFieldId?fieldName(s,c.xFieldId):"x"},yAxis:{type:"value",name:valueIds[0]?fieldName(s,valueIds[0]):"y"},series:[{type:"scatter",data,itemStyle:{color:palette[0]},symbolSize:12}]}; }
   if(c.sort){ const order=gb.labels.map((l,i)=>({l,i,v:gb.series.reduce((a,si)=>a+si[i],0)})); order.sort((a,b)=>c.sort==="asc"?a.v-b.v:b.v-a.v); const idx=order.map(o=>o.i); gb.labels=idx.map(i=>gb.labels[i]); gb.series=gb.series.map(si=>idx.map(i=>si[i])); } return {tooltip:{trigger:"axis"},legend:{show:c.legend!==false},grid:{left:50,right:20,top:30,bottom:40},xAxis:{type:gt==="barH"?"value":"category",data:gt==="barH"?undefined:gb.labels,axisLabel:{rotate:gb.labels.length>8?30:0}},yAxis:{type:gt==="barH"?"category":"value",data:gt==="barH"?gb.labels:undefined},color:c.themeColor?COLOR_HEX[c.themeColor]:undefined,series};
 }
@@ -612,7 +645,7 @@ function moveWidget(id,dir){ const ws=currentDash().widgets,i=ws.findIndex(w=>w.
 function delWidget(id){ currentDash().widgets=currentDash().widgets.filter(w=>w.id!==id); saveState(); render(); toast("组件已删除"); }
 function addWidgetMenu(){ document.getElementById("typeList").innerHTML=Object.keys(TYPE_LABEL).map(t=>`<div class="cfg-item" style="cursor:pointer;text-align:center;margin:0" onclick="addWidget('${t}')">${esc(TYPE_LABEL[t])}</div>`).join(""); showModal("typeModal"); }
 function addWidget(type){ closeModal("typeModal"); const sid=state.sources.length?state.sources[0].id:""; const w={id:uid("w"),name:TYPE_LABEL[type],type,sourceId:sid,config:defaultCfg(type)}; autoLayout([w]); currentDash().widgets.push(w); saveState(); render(); editWidget(w.id); }
-function defaultCfg(type){ switch(type){ case "kpi":return {items:[]}; case "cards":return {groupFieldId:"",tagFieldId:"",numFieldIds:[],ratioFieldIds:[]}; case "rank":return {fieldId:"",order:"desc",topN:5,groupFieldId:""}; case "table":return {columnIds:[]}; case "stat":return {label:"",fieldId:"",aggregate:"sum",suffix:"",color:"blue",isPct:false,decimals:2,separator:false}; case "text":return {text:"在这里输入文本，支持 &lt;h1&gt;、&lt;b&gt; 等 HTML 标签。"}; case "chart":return {chartType:"bar",xFieldId:"",valueFieldIds:[],aggregate:"sum"}; case "gauge":return {label:"",kind:"field",fieldId:"",aggregate:"sum",max:100,suffix:"",color:"teal"}; case "metric":return {title:"",themeColor:"blue",numItems:[],ratioItems:[],progItems:[]}; case "image":return {url:"",fit:"contain"}; case "button":return {text:"点击查看",color:"blue",action:"toast",link:""}; case "progress":return {label:"进度",kind:"ratio",fieldId:"",numId:"",denId:"",max:100,suffix:"",color:"blue",isPct:true}; } return {}; }
+function defaultCfg(type){ switch(type){ case "kpi":return {items:[]}; case "cards":return {groupFieldId:"",tagFieldId:"",numFieldIds:[],ratioFieldIds:[]}; case "rank":return {fieldId:"",order:"desc",topN:5,groupFieldId:""}; case "table":return {columnIds:[]}; case "stat":return {label:"",fieldId:"",aggregate:"sum",suffix:"",color:"blue",isPct:false,decimals:2,separator:false}; case "text":return {text:"在这里输入文本，支持 &lt;h1&gt;、&lt;b&gt; 等 HTML 标签。"}; case "chart":return {chartType:"bar",xFieldId:"",valueFieldIds:[],aggregate:"sum"}; case "gauge":return {label:"",kind:"field",fieldId:"",aggregate:"sum",max:100,suffix:"",color:"teal"}; case "metric":return {title:"",themeColor:"blue",numItems:[],ratioItems:[],progItems:[]}; case "image":return {url:"",fit:"contain"}; case "button":return {text:"点击查看",color:"blue",action:"toast",link:""}; case "progress":return {label:"进度",kind:"ratio",fieldId:"",numId:"",denId:"",max:100,suffix:"",color:"blue",isPct:true}; case "wordcloud":return {textFieldId:"",valueFieldId:"",aggregate:"sum"}; case "divider":return {title:"标题",color:"blue"}; } return {}; }
 
 let wDraft=null;
 function editWidget(id){ wDraft=JSON.parse(JSON.stringify(currentDash().widgets.find(w=>w.id===id))); showModal("widgetCfgModal"); renderCfg(); }
@@ -634,16 +667,27 @@ function renderCfg(){
   else if(wDraft.type==="rank"){ body=`<div class="cfg-panel active">`+srcSel+`<div class="cfg-row"><label>排序字段</label><select id="rField"><option value="">--</option>${fOpt(wDraft.config.fieldId)}</select><label>排序</label><select id="rOrder"><option value="desc" ${wDraft.config.order==="desc"?"selected":""}>降序</option><option value="asc" ${wDraft.config.order==="asc"?"selected":""}>升序</option></select><label>条数</label><input id="rTop" type="number" value="${wDraft.config.topN}" style="width:70px"></div><div class="cfg-row"><label>名称字段</label><select id="rGroup"><option value="">--</option>${fOpt(wDraft.config.groupFieldId||"")}</select></div>`+`</div>`; }
   else if(wDraft.type==="table"){ body=`<div class="cfg-panel active">`+srcSel+`<div class="f-label">展示字段列</div><div id="tCols">${(wDraft.config.columnIds||[]).map((fid,i)=>`<div class="cfg-row"><select data-col="${i}"><option value="">--</option>${fOpt(fid)}</select><span class="fd" onclick="delCol(${i})">删除</span></div>`).join("")}</div><button class="btn sm" onclick="addCol()">+ 字段列</button>`+`</div>`; }
   else if(wDraft.type==="metric"){ if(cfgTabMode==="style"){ body=renderMetricStyleTab(); } else { body=`<div class="cfg-panel active">`+srcSel+`<div class="f-label">数值指标（大数字展示）</div><div id="mNums">${(wDraft.config.numItems||[]).map((it,i)=>`<div class="cfg-item"><div class="cfg-head">数值指标 ${i+1}<span class="c-del" onclick="delMetricNum(${i})">删除</span></div><div class="cfg-row"><input data-mn="${i}" data-k="label" value="${esc(it.label)}" placeholder="标签名" style="width:120px"><select data-mn="${i}" data-k="fieldId"><option value="">--字段--</option>${fOpt(it.fieldId)}</select><select data-mn="${i}" data-k="aggregate">${AGGS.map(a=>`<option ${it.aggregate===a?"selected":""}>${a}</option>`).join("")}</select></div><div class="cfg-row"><input data-mn="${i}" data-k="suffix" value="${esc(it.suffix)}" placeholder="后缀" style="width:80px"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" data-mn="${i}" data-k="isPct" ${it.isPct?"checked":""}>百分比</label></div></div>`).join("")}</div><button class="btn sm" onclick="addMetricNum()">+ 数值指标</button><div class="f-label">比率指标（胶囊标签）</div><div id="mRatios">${(wDraft.config.ratioItems||[]).map((it,i)=>`<div class="cfg-item"><div class="cfg-head">比率指标 ${i+1}<span class="c-del" onclick="delMetricRatio(${i})">删除</span></div><div class="cfg-row"><input data-mr="${i}" data-k="label" value="${esc(it.label)}" placeholder="标签名" style="width:120px"><select data-mr="${i}" data-k="numId"><option value="">--分子--</option>${fOpt(it.numId)}</select><select data-mr="${i}" data-k="denId"><option value="">--分母--</option>${fOpt(it.denId)}</select></div><div class="cfg-row"><label>颜色</label>${cpHTML(it.color||"blue",`data-mr="${i}" data-k="color"`)}<label style="display:flex;align-items:center;gap:4px"><input type="checkbox" data-mr="${i}" data-k="isPct" ${it.isPct!==false?"checked":""}>百分比</label></div></div>`).join("")}</div><button class="btn sm" onclick="addMetricRatio()">+ 比率指标</button><div class="f-label">进度条指标</div><div id="mProgs">${(wDraft.config.progItems||[]).map((it,i)=>`<div class="cfg-item"><div class="cfg-head">进度条 ${i+1}<span class="c-del" onclick="delMetricProg(${i})">删除</span></div><div class="cfg-row"><input data-mp="${i}" data-k="label" value="${esc(it.label)}" placeholder="标签名" style="flex:1">${cpHTML(it.color||"blue",`data-mp="${i}" data-k="color"`)}</div><div class="cfg-row"><select data-mp="${i}" data-k="numId"><option value="">--分子--</option>${fOpt(it.numId)}</select><select data-mp="${i}" data-k="denId"><option value="">--分母--</option>${fOpt(it.denId)}</select></div></div>`).join("")}</div><button class="btn sm" onclick="addMetricProg()">+ 进度条</button>`+`</div>`; } }
+  else if(wDraft.type==="divider"){ const cc=wDraft.config; body=`<div class="cfg-panel active">`+`<div class="cfg-row"><label>\u6807\u9898\u6587\u5b57</label><input id="dvTitle" value="${esc(cc.title||"")}" style="flex:1"></div><div class="cfg-row"><label>\u989c\u8272</label>${cpHTML(cc.color||"blue",`data-cpfield="color"`)}</div>`+`</div>`; }
+  else if(wDraft.type==="wordcloud"){ const cc=wDraft.config; body=`<div class="cfg-panel active">`+`<div class="f-label">\u8bcd\u4e91\u914d\u7f6e</div><div class="cfg-row"><label>\u6587\u672c\u5b57\u6bb5</label><select id="wcText"><option value="">--</option>${fOpt(cc.textFieldId)}</select></div><div class="cfg-row"><label>\u6570\u503c\u5b57\u6bb5</label><select id="wcValue"><option value="">--\u53ef\u9009--</option>${fOpt(cc.valueFieldId)}</select><span style="font-size:11px;color:var(--sub)">\u7559\u7a7a\u5219\u6309\u51fa\u73b0\u6b21\u6570\u8ba1\u7b97</span></div>`+`</div>`; }
   else if(wDraft.type==="image"){ const cc=wDraft.config; body=`<div class="cfg-panel active">`+`<div class="f-label">图片设置</div><div class="cfg-row"><label>图片地址</label><input id="imUrl" value="${esc(cc.url||"")}" placeholder="https://..." style="flex:1"></div><div class="cfg-row"><label>适应方式</label><select id="imFit"><option value="contain" ${cc.fit==="contain"?"selected":""}>适应（完整显示）</option><option value="cover" ${cc.fit==="cover"?"selected":""}>填充（裁剪填满）</option><option value="fill" ${cc.fit==="fill"?"selected":""}>拉伸</option></select></div>`+`</div>`; }
   else if(wDraft.type==="button"){ const cc=wDraft.config; body=`<div class="cfg-panel active">`+`<div class="f-label">按钮设置</div><div class="cfg-row"><label>按钮文字</label><input id="btText" value="${esc(cc.text||"")}" style="width:180px"></div><div class="cfg-row"><label>按钮颜色</label>${cpHTML(cc.color||"blue",`data-cpfield="color"`)}</div><div class="cfg-row"><label>点击动作</label><select id="btAction"><option value="toast" ${cc.action==="toast"?"selected":""}>提示</option><option value="link" ${cc.action==="link"?"selected":""}>打开链接</option></select></div><div class="cfg-row bt-link ${cc.action==="link"?"":"hidden"}"><label>链接地址</label><input id="btLink" value="${esc(cc.link||"")}" placeholder="https://..." style="flex:1"></div>`+`</div>`; }
   else if(wDraft.type==="progress"){ const cc=wDraft.config; if(cfgTabMode==="style"){ body=`<div class="cfg-panel active"><div class="f-label">色彩元素</div><div class="cfg-row"><label>主题色</label>${cpHTML(cc.color||"blue",`data-cpfield="color"`)}</div><div class="f-label">数字元素</div><div class="cfg-row"><label>后缀</label><input id="pgSuffix" value="${esc(cc.suffix||"")}" style="width:90px"></div></div>`; } else { body=`<div class="cfg-panel active">`+`<div class="cfg-row"><label>标题</label><input id="pgLabel" value="${esc(cc.label||"")}" style="width:180px"></div><div class="cfg-row"><label>取值方式</label><select id="pgKind"><option value="ratio" ${cc.kind==="ratio"?"selected":""}>比率(分子/分母)</option><option value="field" ${cc.kind==="field"?"selected":""}>字段聚合</option></select></div><div class="cfg-row kind-field ${cc.kind==="field"?"":"hidden"}"><label>字段</label><select id="pgField"><option value="">--</option>${fOpt(cc.fieldId)}</select><label>聚合</label><select id="pgAgg">${AGGS.map(a=>`<option ${cc.aggregate===a?"selected":""}>${a}</option>`).join("")}</select><label>量程</label><input id="pgMax" type="number" value="${cc.max||100}" style="width:80px"></div><div class="cfg-row kind-ratio ${cc.kind==="ratio"?"":"hidden"}"><label>分子</label><select id="pgNum"><option value="">--</option>${fOpt(cc.numId)}</select><label>分母</label><select id="pgDen"><option value="">--</option>${fOpt(cc.denId)}</select></div>`+`</div>`; } }
   else if(wDraft.type==="text"){ body=`<div class="cfg-panel active"><div class="f-label">文本内容（支持 HTML 标签）</div><textarea id="txText" rows="4" style="width:100%">${esc(wDraft.config.text||"")}</textarea>`+`</div>`; }
+  if(cfgTabMode==="data" && wDraft.sourceId){ body += renderWidgetFilterCfg(); }
   document.getElementById("cfgBody").innerHTML=body; bindCfgEvents();
 }
 function renderChartStyleTab(){
   const c=wDraft.config;
-  return `<div class="cfg-panel active"><div class="f-label">色彩元素</div><div class="cfg-row"><label>主题色</label>${cpHTML(c.themeColor||"blue",`data-cpfield="themeColor"`)}</div><div class="cfg-row"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="chLegend" ${c.legend!==false?"checked":""}>显示图例</label></div><div class="f-label">数字元素</div><div class="cfg-row"><label>小数位数</label><select id="chDec"><option value="0" ${c.decimals==0?"selected":""}>整数</option><option value="1" ${c.decimals==1?"selected":""}>保留1位</option><option value="2" ${c.decimals==2?"selected":""}>保留2位</option></select></div></div>`;
+  return `<div class="cfg-panel active"><div class="f-label">色彩元素</div><div class="cfg-row"><label>主题色</label>${cpHTML(c.themeColor||"blue",`data-cpfield="themeColor"`)}</div><div class="cfg-row"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="chLegend" ${c.legend!==false?"checked":""}>显示图例</label></div><div class="f-label">数字元素</div><div class="cfg-row"><label>小数位数</label><select id="chDec"><option value="0" ${c.decimals==0?"selected":""}>整数</option><option value="1" ${c.decimals==1?"selected":""}>保留1位</option><option value="2" ${c.decimals==2?"selected":""}>保留2位</option></select></div><div class="cfg-row"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="chLabel" ${c.showLabel?"checked":""}>显示数值标签</label></div></div>`;
 }
+function renderWidgetFilterCfg(){
+  const s=getSource(wDraft.sourceId); const fields=s?s.fields:[];
+  const fOpt2=fid=>fields.map(f=>`<option value="${f.id}" ${fid===f.id?"selected":""}>${esc(f.name)}</option>`).join("");
+  const filters=wDraft.config.filters||[];
+  return `<div style="margin-top:6px;padding-top:12px;border-top:1px solid var(--line)"><div class="f-label">\u6570\u636e\u8303\u56f4\uff08\u7ec4\u4ef6\u7b5b\u9009\uff09</div><div id="wFilters">${filters.map((f,i)=>`<div class="cfg-row"><select data-wf="${i}" data-k="fieldId"><option value="">--\u5b57\u6bb5--</option>${fOpt2(f.fieldId)}</select><input data-wf="${i}" data-k="value" value="${esc(f.value)}" placeholder="\u7b49\u4e8e\u503c" style="width:120px"><span class="fd" onclick="delWidgetFilter(${i})">\u5220\u9664</span></div>`).join("")}</div><button class="btn sm" onclick="addWidgetFilter()">+ \u6dfb\u52a0\u7b5b\u9009\u6761\u4ef6</button><div style="font-size:11px;color:var(--sub);margin-top:6px">\u591a\u4e2a\u6761\u4ef6\u4e3a AND \u5173\u7cfb\uff0c\u53ea\u663e\u793a\u540c\u65f6\u6ee1\u8db3\u6240\u6709\u6761\u4ef6\u7684\u6570\u636e</div></div>`;
+}
+function addWidgetFilter(){ wDraft.config.filters=wDraft.config.filters||[]; wDraft.config.filters.push({fieldId:"",value:""}); renderCfg(); }
+function delWidgetFilter(i){ wDraft.config.filters.splice(i,1); renderCfg(); }
 function renderKpiStyleTab(){
   const items=wDraft.config.items||[];
   return `<div class="cfg-panel active"><div class="f-label">指标颜色设置</div>${items.map((it,i)=>`<div class="cfg-row"><label>指标${i+1}</label><span style="font-size:13px;min-width:100px">${esc(it.name||"指标"+(i+1))}</span>${cpHTML(it.color||"gray",`data-i="${i}" data-k="color"`)}</div>`).join("")||'<div class="hint">暂无指标项</div>'}</div>`;
@@ -692,6 +736,9 @@ function bindCfgEvents(){
   document.querySelectorAll("#mNums [data-mn]").forEach(el=>{ const i=+el.dataset.mn,k=el.dataset.k; el.addEventListener("change",()=>{ wDraft.config.numItems[i][k]=el.type==="checkbox"?el.checked:el.value; }); el.addEventListener("input",()=>{ if(el.tagName==="INPUT"&&el.type==="text") wDraft.config.numItems[i][k]=el.value; }); });
   document.querySelectorAll("#mRatios [data-mr]").forEach(el=>{ const i=+el.dataset.mr,k=el.dataset.k; el.addEventListener("change",()=>{ wDraft.config.ratioItems[i][k]=el.type==="checkbox"?el.checked:el.value; }); el.addEventListener("input",()=>{ if(el.tagName==="INPUT"&&el.type==="text") wDraft.config.ratioItems[i][k]=el.value; }); });
   document.querySelectorAll("#mProgs [data-mp]").forEach(el=>{ const i=+el.dataset.mp,k=el.dataset.k; el.addEventListener("change",()=>{ wDraft.config.progItems[i][k]=el.value; }); el.addEventListener("input",()=>{ if(el.tagName==="INPUT"&&el.type==="text") wDraft.config.progItems[i][k]=el.value; }); });
+  const dvT=document.getElementById("dvTitle"); if(dvT)dvT.oninput=e=>wDraft.config.title=e.target.value;
+  const wcT=document.getElementById("wcText"); if(wcT)wcT.onchange=e=>wDraft.config.textFieldId=e.target.value;
+  const wcV=document.getElementById("wcValue"); if(wcV)wcV.onchange=e=>wDraft.config.valueFieldId=e.target.value;
   const imU=document.getElementById("imUrl"); if(imU)imU.oninput=e=>wDraft.config.url=e.target.value;
   const imF=document.getElementById("imFit"); if(imF)imF.onchange=e=>wDraft.config.fit=e.target.value;
   const btT=document.getElementById("btText"); if(btT)btT.oninput=e=>wDraft.config.text=e.target.value;
@@ -710,6 +757,8 @@ function bindCfgEvents(){
   const chSort=document.getElementById("chSort"); if(chSort)chSort.onchange=e=>{wDraft.config.sort=e.target.value==="none"?undefined:e.target.value;};
   const chLegend=document.getElementById("chLegend"); if(chLegend)chLegend.onchange=e=>wDraft.config.legend=e.target.checked;
   const chDec=document.getElementById("chDec"); if(chDec)chDec.onchange=e=>wDraft.config.decimals=parseInt(e.target.value)||0;
+  const chLabel=document.getElementById("chLabel"); if(chLabel)chLabel.onchange=e=>wDraft.config.showLabel=e.target.checked;
+  document.querySelectorAll("#wFilters [data-wf]").forEach(el=>{ const i=+el.dataset.wf,k=el.dataset.k; el.addEventListener("change",()=>{ wDraft.config.filters[i][k]=el.value; }); el.addEventListener("input",()=>{ if(el.tagName==="INPUT") wDraft.config.filters[i][k]=el.value; }); });
   bindColorPickers();
 }
 function addKpiItem(){wDraft.config.items.push({name:"新指标",kind:"field",fieldId:"",aggregate:"sum",isPct:false,note:"",color:"gray"});renderCfg();} function delKpiItem(i){wDraft.config.items.splice(i,1);renderCfg();}
@@ -724,6 +773,9 @@ function addChartVal(){wDraft.config.valueFieldIds.push("");renderCfg();} functi
 function addRadarVal(){wDraft.config.valueFieldIds.push("");renderCfg();} function delRadarVal(i){wDraft.config.valueFieldIds.splice(i,1);renderCfg();}
 function saveWidget(){ const ws=currentDash().widgets,idx=ws.findIndex(w=>w.id===wDraft.id); if(idx>=0)ws[idx]=wDraft; saveState(); closeModal("widgetCfgModal"); render(); toast("组件配置已保存"); }
 
+function dupWidget(id){ const ws=currentDash().widgets; const src=ws.find(w=>w.id===id); if(!src)return; const copy=JSON.parse(JSON.stringify(src)); copy.id=uid("w"); copy.name=src.name+"(副本)"; if(copy.x!==undefined){copy.x+=20;copy.y+=20;} ws.splice(ws.findIndex(w=>w.id===id)+1,0,copy); saveState(); render(); toast("已复制组件"); }
+function openDashSettings(){ document.getElementById("dsTitle").value=state.title||""; document.getElementById("dsSub").value=state.sub||""; document.getElementById("dsBg").value=state.bg||"#eef3fb"; showModal("dashSetModal"); }
+function saveDashSettings(){ state.title=document.getElementById("dsTitle").value.trim()||undefined; state.sub=document.getElementById("dsSub").value.trim()||undefined; const bg=document.getElementById("dsBg").value; state.bg=bg; document.body.style.background=bg; saveState(); closeModal("dashSetModal"); render(); toast("看板设置已保存"); }
 function openWidgets(){ showModal("widgetModal"); const dash=currentDash(); document.getElementById("widgetList").innerHTML=dash.widgets.map(w=>`<div class="cfg-item"><div class="cfg-head"><span>${esc(w.name)} <span style="color:var(--sub);font-weight:400">(${TYPE_LABEL[w.type]||w.type})</span></span><span style="display:flex;gap:8px"><span class="c-del" onclick="moveWidget('${w.id}',-1)">上移</span><span class="c-del" onclick="moveWidget('${w.id}',1)">下移</span><span class="c-del" onclick="toggleWidgetVis('${w.id}');openWidgets()">${w.hidden?'显示':'隐藏'}</span><span class="c-del" onclick="editWidget('${w.id}')">配置</span><span class="c-del" onclick="delWidget('${w.id}')">删除</span></span></div><div style="font-size:12px;color:var(--sub)${w.hidden?';opacity:.5':''}">数据源：${esc(getSource(w.sourceId)?getSource(w.sourceId).name:"(未绑定)")} · 位置 (${w.x},${w.y}) · ${w.w}×${w.h}</div></div>`).join("")||'<div class="empty">当前看板暂无组件。</div>'; }
 
 let srcDraft=null,curSrcId=null;
@@ -840,9 +892,19 @@ function renderFilterTags() {
   const fn = s ? fieldName(s, filterState.fieldId) : "";
   box.innerHTML = '<span class="f-tag">'+esc(fn)+' = '+esc(filterState.value || "全部")+' <span class="x" onclick="clearFilter()">&times;</span></span>';
 }
+let _curWidget=null;
 function getFilteredRows(s) {
-  if (!filterState.sourceId || filterState.sourceId !== s.id || !filterState.fieldId || !filterState.value) return s.rows;
-  return s.rows.filter(r => String(r[filterState.fieldId] ?? "") === filterState.value);
+  let rows = s.rows;
+  if (filterState.sourceId === s.id && filterState.fieldId && filterState.value) {
+    rows = rows.filter(r => String(r[filterState.fieldId] ?? "") === filterState.value);
+  }
+  if (_curWidget && _curWidget.config && _curWidget.config.filters && _curWidget.config.filters.length) {
+    rows = rows.filter(r => _curWidget.config.filters.every(f => {
+      if (!f.fieldId || f.value === "") return true;
+      return String(r[f.fieldId] ?? "") === String(f.value);
+    }));
+  }
+  return rows;
 }
 /* ================= 主题切换 ================= */
 function toggleTheme() {
