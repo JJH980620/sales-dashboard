@@ -278,6 +278,11 @@
     .resize-h{display:none;}
     #canvas{min-height:auto;}
   }
+  .bg-row{display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap;}
+  .bg-opt{width:22px;height:22px;border-radius:6px;cursor:pointer;border:2px solid transparent;transition:.12s;box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:#9aa7b5;}
+  .bg-opt:hover{transform:scale(1.12);}
+  .bg-opt.sel{border-color:#333;box-shadow:0 0 0 2px #fff inset;}
+  body.dark .bg-opt.sel{border-color:#fff;box-shadow:0 0 0 2px #252b3d inset;}
 </style>
 </head>
 <body>
@@ -383,7 +388,7 @@ function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg
 const AGGS=["sum","avg","count","max","min"];
 const COLORS=["blue","green","gray","purple","teal","orange","pink","red"];
 const TYPE_LABEL={kpi:"KPI 指标卡组",cards:"多指标卡片组",rank:"排行榜",table:"明细表",stat:"统计数字卡",text:"文本模块",chart:"图表",gauge:"仪表盘/进度环",metric:"指标板",image:"图片",button:"按钮",progress:"进度图",wordcloud:"词云图",divider:"标题/分隔线"};
-const CHART_TYPES=["bar","barH","stackBar","line","area","pie","doughnut","funnel","radar","scatter"];
+const CHART_TYPES=["bar","barH","stackBar","line","area","pie","doughnut","funnel","radar","scatter","heatmap"];
 const LS_KEY="dashBuilder_v4";
 const CANVAS_W=1200, GRID=10, GAP=16, MINW=200, MINH=120;
 const DEF_SIZE={kpi:[1200,190],cards:[1200,420],rank:[590,360],table:[1200,320],stat:[320,170],text:[1200,130],chart:[590,380],gauge:[590,380],metric:[590,320],image:[400,300],button:[240,120],progress:[590,180],wordcloud:[590,360],divider:[590,80]};
@@ -460,8 +465,15 @@ function render(){
   const canvas=document.getElementById("canvas");
   const widgets=dash?dash.widgets:[];
   if(!widgets.length){ canvas.style.height="420px"; canvas.innerHTML='<div class="canvas-empty">当前看板暂无组件，点击右上角「+ 添加组件」开始搭建。</div>'; return; }
-  canvas.innerHTML=widgets.map(w=>`
-    <div class="module ${w.hidden?'hidden-w':''}" data-id="${w.id}" style="left:${w.x}px;top:${w.y}px;width:${w.w}px;height:${w.h}px" ondblclick="editWidget('${w.id}')">
+  canvas.innerHTML=widgets.map(w=>{
+    const _st=(w.config&&w.config.style)||{};
+    let _mstl=`left:${w.x}px;top:${w.y}px;width:${w.w}px;height:${w.h}px`;
+    if(_st.bg) _mstl+=`;background:${COLOR_HEX[_st.bg]||_st.bg}`;
+    if(_st.radius!=null) _mstl+=`;border-radius:${_st.radius}px`;
+    if(_st.shadow) _mstl+=`;box-shadow:0 4px 18px rgba(0,0,0,.12)`;
+    if(_st.border) _mstl+=`;border:1px solid var(--line)`;
+    return `
+    <div class="module ${w.hidden?'hidden-w':''}" data-id="${w.id}" style="${_mstl}" ondblclick="editWidget('${w.id}')">
       <div class="module-bar" title="拖拽移动">
         <span class="m-title">${esc(w.name)}</span>
         <span class="m-type">${TYPE_LABEL[w.type]||w.type}</span>
@@ -476,7 +488,7 @@ function render(){
       </div>
       <div class="module-body">${renderWidget(w)}</div>
       <div class="resize-h" title="拖拽调整大小"></div>
-    </div>`).join("");
+    </div>`; }).join("");
   updateCanvasHeight();
   drawCharts();
   initDnD();
@@ -596,6 +608,7 @@ function groupByField(s,xFieldId,valueIds){ const map={},order=[]; const rows=ge
 function buildChartOption(w,s){ _curWidget=w; const c=w.config,valueIds=(c.valueFieldIds||[]).filter(Boolean),gt=c.chartType; const palette=["#3b82f6","#22c55e","#f59e0b","#a855f7","#14b8a6","#ec4899","#ef4444","#9aa7b5"];
   if(gt==="pie"||gt==="doughnut"){ const gb=groupByField(s,c.xFieldId,valueIds.slice(0,1)); return {tooltip:{trigger:"item",formatter:"{b}: {c} ({d}%)"},legend:{bottom:0,show:c.legend!==false},series:[{type:"pie",radius:gt==="doughnut"?["42%","68%"]:"72%",data:gb.labels.map((l,i)=>({name:l,value:gb.series[0][i]})),color:c.themeColor?[COLOR_HEX[c.themeColor],"#22c55e","#f59e0b","#a855f7","#14b8a6","#ec4899","#ef4444","#9aa7b5"]:palette}]}; }
   if(gt==="radar"){ const allMax=Math.max(...s.rows.map(r=>Math.max(...valueIds.map(f=>num(r[f])))),1); return {tooltip:{},legend:{bottom:0},radar:{indicator:valueIds.map(fid=>({name:fieldName(s,fid),max:allMax}))},series:[{type:"radar",data:[{value:valueIds.map(fid=>fieldAgg(s,fid,"sum")),areaStyle:{}}],color:palette}]}; }
+  if(gt==="heatmap"){ const gb=groupByField(s,c.xFieldId,valueIds); const data=[]; valueIds.forEach((fid,ci)=>{ gb.series[ci].forEach((v,ri)=>{ data.push([ci,ri,v]); }); }); const allV=valueIds.flatMap((fid,ci)=>gb.series[ci]); const maxV=Math.max(...allV,1); return {tooltip:{position:"top",formatter:pp=>{ const v=pp.value; return fieldName(s,valueIds[v[0]])+' / '+gb.labels[v[1]]+': '+v[2]; }},grid:{left:70,right:20,top:20,bottom:70},xAxis:{type:"category",data:valueIds.map(fid=>fieldName(s,fid)),splitArea:{show:true}},yAxis:{type:"category",data:gb.labels,splitArea:{show:true}},visualMap:{min:0,max:maxV,calculable:true,orient:"horizontal",left:"center",bottom:0,inRange:{color:["#eef3fb","#3b82f6"]}},series:[{type:"heatmap",data,label:{show:true},itemStyle:{borderColor:"#fff",borderWidth:1}}]}; }
   if(gt==="funnel"){ const gb=groupByField(s,c.xFieldId,valueIds.slice(0,1)); const data=gb.labels.map((l,i)=>({name:l,value:gb.series[0][i]})).sort((a,b)=>b.value-a.value); return {tooltip:{trigger:"item",formatter:"{b}: {c}"},series:[{type:"funnel",left:"15%",width:"70%",data,color:palette}]}; }
   const gb=groupByField(s,c.xFieldId,valueIds); const isStack=gt==="stackBar"; const series=valueIds.map((fid,i)=>{ const base={name:fieldName(s,fid),type:(gt==="bar"||gt==="barH"||gt==="stackBar")?"bar":"line",data:gb.series[i],itemStyle:{color:palette[i%palette.length]}}; if(isStack){base.stack="total";base.barMaxWidth=30;} if(gt==="area"){base.areaStyle={opacity:.25};} if(gt==="line"||gt==="area"){base.lineStyle={color:palette[i%palette.length]};} if(c.showLabel){base.label={show:true,position:gt==="barH"?"right":"top"};} return base; });
   if(gt==="scatter"){ const rows=getFilteredRows(s); const data=rows.map(r=>[ c.xFieldId&&r[c.xFieldId]!==undefined?num(r[c.xFieldId]):0, valueIds[0]?num(r[valueIds[0]]):0 ]); return {tooltip:{trigger:"item",formatter:"({c0}, {c1})"},xAxis:{type:"value",name:c.xFieldId?fieldName(s,c.xFieldId):"x"},yAxis:{type:"value",name:valueIds[0]?fieldName(s,valueIds[0]):"y"},series:[{type:"scatter",data,itemStyle:{color:palette[0]},symbolSize:12}]}; }
@@ -656,7 +669,7 @@ function renderCfg(){
   const s=getSource(wDraft.sourceId); const fields=s?s.fields:[];
   const fOpt=fid=>fields.map(f=>`<option value="${f.id}" ${fid===f.id?"selected":""}>${esc(f.name)}</option>`).join("");
   const srcSel=`<div class="cfg-row"><label>数据源</label><select id="cfgSource">${state.sources.map(x=>`<option value="${x.id}" ${x.id===wDraft.sourceId?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>`;
-  const styleTab=wDraft.type==="kpi"||wDraft.type==="stat"||wDraft.type==="gauge"||wDraft.type==="metric"||wDraft.type==="cards"||wDraft.type==="progress"||wDraft.type==="button"||wDraft.type==="image";
+  const styleTab=true;
   document.getElementById("cfgTabs").innerHTML=`<div class="cfg-tab ${cfgTabMode==="data"?"active":""}" onclick="cfgTabMode='data';renderCfg()">数据</div>`+(styleTab?`<div class="cfg-tab ${cfgTabMode==="style"?"active":""}" onclick="cfgTabMode='style';renderCfg()">样式</div>`:"");
   let body="";
   if(wDraft.type==="kpi"){ if(cfgTabMode==="style"){ body=renderKpiStyleTab(); } else { body=`<div class="cfg-panel active">`+srcSel+`<div class="f-label">指标项</div><div id="kpiItems">${wDraft.config.items.map((it,i)=>`<div class="cfg-item"><div class="cfg-head">指标 ${i+1}<span class="c-del" onclick="delKpiItem(${i})">删除</span></div><div class="cfg-row"><input data-i="${i}" data-k="name" value="${esc(it.name)}" style="width:130px"><select data-i="${i}" data-k="kind"><option value="field" ${it.kind==="field"?"selected":""}>字段聚合</option><option value="ratio" ${it.kind==="ratio"?"selected":""}>比率相除</option></select></div><div class="cfg-row kind-field ${it.kind==="field"?"":"hidden"}"><label>绑定字段</label><select data-i="${i}" data-k="fieldId"><option value="">--</option>${fOpt(it.fieldId)}</select><label>聚合</label><select data-i="${i}" data-k="aggregate">${AGGS.map(a=>`<option ${it.aggregate===a?"selected":""}>${a}</option>`).join("")}</select></div><div class="cfg-row kind-ratio ${it.kind==="ratio"?"":"hidden"}"><label>分子</label><select data-i="${i}" data-k="numId"><option value="">--</option>${fOpt(it.numId)}</select><label>分母</label><select data-i="${i}" data-k="denId"><option value="">--</option>${fOpt(it.denId)}</select></div><div class="cfg-row"><label>颜色</label>${cpHTML(it.color||"gray",`data-i="${i}" data-k="color"`)}<label style="display:flex;align-items:center;gap:4px"><input type="checkbox" data-i="${i}" data-k="isPct" ${it.isPct?"checked":""}>百分比</label></div><div class="cfg-row"><label>说明</label><input data-i="${i}" data-k="note" value="${esc(it.note)}" style="flex:1"></div></div>`).join("")}</div><button class="btn sm" onclick="addKpiItem()">+ 新增指标</button>`+`</div>`; } }
@@ -673,8 +686,20 @@ function renderCfg(){
   else if(wDraft.type==="button"){ const cc=wDraft.config; body=`<div class="cfg-panel active">`+`<div class="f-label">按钮设置</div><div class="cfg-row"><label>按钮文字</label><input id="btText" value="${esc(cc.text||"")}" style="width:180px"></div><div class="cfg-row"><label>按钮颜色</label>${cpHTML(cc.color||"blue",`data-cpfield="color"`)}</div><div class="cfg-row"><label>点击动作</label><select id="btAction"><option value="toast" ${cc.action==="toast"?"selected":""}>提示</option><option value="link" ${cc.action==="link"?"selected":""}>打开链接</option></select></div><div class="cfg-row bt-link ${cc.action==="link"?"":"hidden"}"><label>链接地址</label><input id="btLink" value="${esc(cc.link||"")}" placeholder="https://..." style="flex:1"></div>`+`</div>`; }
   else if(wDraft.type==="progress"){ const cc=wDraft.config; if(cfgTabMode==="style"){ body=`<div class="cfg-panel active"><div class="f-label">色彩元素</div><div class="cfg-row"><label>主题色</label>${cpHTML(cc.color||"blue",`data-cpfield="color"`)}</div><div class="f-label">数字元素</div><div class="cfg-row"><label>后缀</label><input id="pgSuffix" value="${esc(cc.suffix||"")}" style="width:90px"></div></div>`; } else { body=`<div class="cfg-panel active">`+`<div class="cfg-row"><label>标题</label><input id="pgLabel" value="${esc(cc.label||"")}" style="width:180px"></div><div class="cfg-row"><label>取值方式</label><select id="pgKind"><option value="ratio" ${cc.kind==="ratio"?"selected":""}>比率(分子/分母)</option><option value="field" ${cc.kind==="field"?"selected":""}>字段聚合</option></select></div><div class="cfg-row kind-field ${cc.kind==="field"?"":"hidden"}"><label>字段</label><select id="pgField"><option value="">--</option>${fOpt(cc.fieldId)}</select><label>聚合</label><select id="pgAgg">${AGGS.map(a=>`<option ${cc.aggregate===a?"selected":""}>${a}</option>`).join("")}</select><label>量程</label><input id="pgMax" type="number" value="${cc.max||100}" style="width:80px"></div><div class="cfg-row kind-ratio ${cc.kind==="ratio"?"":"hidden"}"><label>分子</label><select id="pgNum"><option value="">--</option>${fOpt(cc.numId)}</select><label>分母</label><select id="pgDen"><option value="">--</option>${fOpt(cc.denId)}</select></div>`+`</div>`; } }
   else if(wDraft.type==="text"){ body=`<div class="cfg-panel active"><div class="f-label">文本内容（支持 HTML 标签）</div><textarea id="txText" rows="4" style="width:100%">${esc(wDraft.config.text||"")}</textarea>`+`</div>`; }
+  if(cfgTabMode==="style"){
+    const ST=wDraft.type;
+    if(ST==="chart") body=renderChartStyleTab();
+    else if(!["kpi","stat","gauge","metric","cards","progress"].includes(ST)) body="";
+    body += renderCommonStyle();
+  }
   if(cfgTabMode==="data" && wDraft.sourceId){ body += renderWidgetFilterCfg(); }
   document.getElementById("cfgBody").innerHTML=body; bindCfgEvents();
+}
+function renderCommonStyle(){
+  const st=wDraft.config.style||(wDraft.config.style={});
+  const bg=st.bg||"";
+  const opts='<span class="bg-opt '+(bg===""?"sel":"")+'" data-v="" title="\u65e0" style="background:transparent;border:1px dashed var(--line)">\u2205</span>'+COLORS.map(cc=>'<span class="bg-opt '+(bg===cc?"sel":"")+'" data-v="'+cc+'" style="background:'+COLOR_HEX[cc]+'" title="'+cc+'"></span>').join('');
+  return `<div class="cfg-panel active" style="margin-top:10px"><div class="f-label">\u7ec4\u4ef6\u901a\u7528\u6837\u5f0f</div><div class="cfg-row"><label>\u80cc\u666f\u8272</label><span id="cmBgRow" class="bg-row">${opts}</span></div><div class="cfg-row"><label>\u5706\u89d2</label><input id="cmRadius" type="number" min="0" max="40" value="${st.radius!=null?st.radius:8}" style="width:70px"><span style="font-size:11px;color:var(--sub)">px</span><label style="display:flex;align-items:center;gap:4px;margin-left:10px"><input type="checkbox" id="cmShadow" ${st.shadow?"checked":""}>\u9634\u5f71</label><label style="display:flex;align-items:center;gap:4px;margin-left:10px"><input type="checkbox" id="cmBorder" ${st.border?"checked":""}>\u8fb9\u6846</label></div></div>`;
 }
 function renderChartStyleTab(){
   const c=wDraft.config;
@@ -759,6 +784,10 @@ function bindCfgEvents(){
   const chDec=document.getElementById("chDec"); if(chDec)chDec.onchange=e=>wDraft.config.decimals=parseInt(e.target.value)||0;
   const chLabel=document.getElementById("chLabel"); if(chLabel)chLabel.onchange=e=>wDraft.config.showLabel=e.target.checked;
   document.querySelectorAll("#wFilters [data-wf]").forEach(el=>{ const i=+el.dataset.wf,k=el.dataset.k; el.addEventListener("change",()=>{ wDraft.config.filters[i][k]=el.value; }); el.addEventListener("input",()=>{ if(el.tagName==="INPUT") wDraft.config.filters[i][k]=el.value; }); });
+  document.querySelectorAll("#cmBgRow .bg-opt").forEach(el=>{ el.addEventListener("click",()=>{ wDraft.config.style.bg=el.dataset.v; renderCfg(); }); });
+  const cmR=document.getElementById("cmRadius"); if(cmR)cmR.oninput=e=>{ wDraft.config.style.radius=parseInt(e.target.value)||0; };
+  const cmS=document.getElementById("cmShadow"); if(cmS)cmS.onchange=e=>wDraft.config.style.shadow=e.target.checked;
+  const cmB=document.getElementById("cmBorder"); if(cmB)cmB.onchange=e=>wDraft.config.style.border=e.target.checked;
   bindColorPickers();
 }
 function addKpiItem(){wDraft.config.items.push({name:"新指标",kind:"field",fieldId:"",aggregate:"sum",isPct:false,note:"",color:"gray"});renderCfg();} function delKpiItem(i){wDraft.config.items.splice(i,1);renderCfg();}
