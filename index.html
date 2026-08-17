@@ -11,21 +11,36 @@
     --teal:#14b8a6; --orange:#f59e0b; --pink:#ec4899; --red:#ef4444;
   }
   *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:"Microsoft YaHei","PingFang SC","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);padding:24px 32px 48px;}
+  body{font-family:"Microsoft YaHei","PingFang SC","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);padding:20px 28px 48px;}
   .page{max-width:1500px;margin:0 auto;}
   .hidden{display:none !important;}
 
-  .header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:20px;}
-  .header .title{font-size:21px;font-weight:700;}
-  .header .sub{font-size:13px;font-weight:400;color:var(--sub);margin-top:4px;}
+  .header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:16px;}
+  .header .title{font-size:20px;font-weight:700;}
+  .header .sub{font-size:12px;font-weight:400;color:var(--sub);margin-top:3px;}
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;}
-  .btn{border:none;cursor:pointer;font-size:13px;font-weight:600;padding:9px 14px;border-radius:9px;background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(30,50,80,.1);transition:.15s;}
+  .btn{border:none;cursor:pointer;font-size:13px;font-weight:600;padding:8px 13px;border-radius:9px;background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(30,50,80,.1);transition:.15s;}
   .btn:hover{transform:translateY(-1px);box-shadow:0 4px 10px rgba(30,50,80,.15);}
   .btn:active{transform:translateY(0);}
   .btn.primary{background:var(--blue);color:#fff;}
   .btn.ghost{background:transparent;box-shadow:none;border:1px solid var(--line);}
-  .btn.danger{background:#fff3f3;color:var(--red);}
   .btn.sm{padding:5px 10px;font-size:12px;}
+
+  /* 看板页签栏（参考 WPS 页面管理） */
+  .tabs-wrap{display:flex;align-items:center;gap:10px;background:var(--card);border-radius:12px;padding:8px 12px;box-shadow:0 2px 10px rgba(30,50,80,.06);margin-bottom:18px;overflow-x:auto;}
+  .tabs-label{font-size:13px;color:var(--sub);font-weight:600;white-space:nowrap;}
+  .dash-tabs{display:flex;gap:6px;align-items:center;flex:1;}
+  .dash-tab{display:flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--ink);white-space:nowrap;border:1px solid transparent;}
+  .dash-tab:hover{background:#f2f6fb;}
+  .dash-tab.active{background:#e8f0fe;color:var(--blue);font-weight:600;}
+  .dash-tab .menu-btn{opacity:0;cursor:pointer;font-size:14px;color:var(--sub);padding:0 2px;border:none;background:none;}
+  .dash-tab:hover .menu-btn,.dash-tab.active .menu-btn{opacity:1;}
+  .dash-add{font-size:18px;font-weight:600;color:var(--sub);cursor:pointer;padding:4px 10px;border-radius:8px;white-space:nowrap;}
+  .dash-add:hover{background:#f2f6fb;color:var(--blue);}
+  .menu{position:fixed;background:#fff;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.16);padding:6px;z-index:120;min-width:130px;}
+  .menu .mi{padding:8px 12px;font-size:13px;cursor:pointer;border-radius:7px;}
+  .menu .mi:hover{background:#f2f6fb;}
+  .menu .mi.danger{color:var(--red);}
 
   /* 模块画布（12列栅格） */
   #canvas{display:grid;grid-template-columns:repeat(12,1fr);gap:18px;}
@@ -36,7 +51,6 @@
   .module-bar .m-actions .btn{box-shadow:none;background:#f5f8fc;padding:4px 10px;font-size:12px;}
   .module-body{}
 
-  /* KPI */
   .kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;}
   .kpi{background:var(--card);border-radius:14px;padding:18px 20px;box-shadow:0 2px 10px rgba(30,50,80,.06);border-left:4px solid var(--gray);}
   .kpi .k-label{font-size:13px;color:var(--sub);margin-bottom:10px;}
@@ -51,13 +65,11 @@
   .c-pink{border-left-color:var(--pink);} .c-pink .k-value{color:var(--pink);}
   .c-red{border-left-color:var(--red);} .c-red .k-value{color:var(--red);}
 
-  /* 统计数字卡 */
   .stat{background:var(--card);border-radius:14px;padding:20px;box-shadow:0 2px 10px rgba(30,50,80,.06);border-left:4px solid var(--gray);}
   .stat .s-label{font-size:13px;color:var(--sub);margin-bottom:12px;}
   .stat .s-value{font-size:34px;font-weight:700;line-height:1;}
   .stat .s-suffix{font-size:16px;color:var(--sub);margin-left:4px;font-weight:600;}
 
-  /* 卡片组 */
   .shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
   .shop{background:var(--card);border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(30,50,80,.06);}
   .shop .s-head{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;color:#fff;}
@@ -83,7 +95,6 @@
   .bg-pink{background:var(--pink);} .bar-pink i{background:var(--pink);}
   .bg-red{background:var(--red);} .bar-red i{background:var(--red);}
 
-  /* 排行榜 */
   .rank{background:var(--card);border-radius:14px;box-shadow:0 2px 10px rgba(30,50,80,.06);padding:8px 0;}
   .rank .rk{display:flex;align-items:center;gap:14px;padding:11px 20px;border-bottom:1px solid var(--line);}
   .rank .rk:last-child{border-bottom:none;}
@@ -94,22 +105,15 @@
   .rank .rk .rk-name{flex:1;font-size:14px;}
   .rank .rk .rk-val{font-size:16px;font-weight:700;}
 
-  /* 明细表 */
   table.detail{width:100%;border-collapse:collapse;font-size:13px;background:var(--card);border-radius:14px;overflow:hidden;box-shadow:0 2px 10px rgba(30,50,80,.06);}
   table.detail th,table.detail td{border:1px solid var(--line);padding:9px 12px;text-align:center;}
   table.detail th{background:#f5f8fc;font-weight:600;}
 
-  /* 图表 / 仪表盘 */
   .chart-el{width:100%;height:320px;background:var(--card);border-radius:14px;box-shadow:0 2px 10px rgba(30,50,80,.06);}
   .chart-fallback{width:100%;height:320px;background:var(--card);border-radius:14px;box-shadow:0 2px 10px rgba(30,50,80,.06);display:flex;align-items:center;justify-content:center;color:var(--sub);font-size:13px;}
-
-  /* 文本模块 */
   .text-mod{background:var(--card);border-radius:14px;padding:18px 22px;box-shadow:0 2px 10px rgba(30,50,80,.06);font-size:14px;line-height:1.7;}
-  .text-mod h1,.text-mod h2,.text-mod h3{margin-bottom:6px;}
-
   .empty{background:var(--card);border-radius:14px;padding:30px;text-align:center;color:var(--sub);box-shadow:0 2px 10px rgba(30,50,80,.06);}
 
-  /* 模态 */
   .modal-mask{position:fixed;inset:0;background:rgba(20,30,45,.45);display:flex;align-items:flex-start;justify-content:center;padding:30px 20px;z-index:50;overflow:auto;}
   .modal{background:#fff;border-radius:16px;width:100%;max-width:960px;box-shadow:0 20px 60px rgba(0,0,0,.25);}
   .modal-head{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:1px solid var(--line);}
@@ -122,32 +126,26 @@
   .sidelist{border-right:1px solid var(--line);padding-right:14px;}
   .sidelist .sl-item{padding:10px 12px;border-radius:9px;cursor:pointer;font-size:14px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;}
   .sidelist .sl-item.active{background:#e8f0fe;color:var(--blue);font-weight:600;}
-  .sidelist .sl-item:hover{background:#f2f6fb;}
   .sidelist .sl-item .d{color:var(--red);cursor:pointer;font-weight:400;font-size:12px;}
-
-  .f-label{font-size:13px;font-weight:600;margin:14px 0 8px;color:var(--ink);}
+  .f-label{font-size:13px;font-weight:600;margin:14px 0 8px;}
   .f-label:first-child{margin-top:0;}
   .field-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;}
   .field-row input,.field-row select,.cfg-row input,.cfg-row select,.cfg-row textarea{padding:7px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;outline:none;}
   .field-row input:focus,.field-row select:focus,.cfg-row input:focus,.cfg-row select:focus,.cfg-row textarea:focus{border-color:var(--blue);}
   .field-row .fd{color:var(--red);cursor:pointer;font-size:13px;}
-
   table.data{width:100%;border-collapse:collapse;font-size:13px;}
   table.data th,table.data td{border:1px solid var(--line);padding:6px 8px;text-align:center;}
   table.data th{background:#f5f8fc;font-weight:600;position:sticky;top:0;}
   table.data input{width:100%;border:none;text-align:center;font-size:13px;outline:none;background:transparent;}
   table.data input:focus{box-shadow:0 0 0 2px var(--blue);}
-
   .cfg-row{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap;}
   .cfg-row label{font-size:13px;color:var(--sub);min-width:72px;}
   .cfg-item{border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:10px;background:#fbfcfe;}
   .cfg-item .cfg-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-weight:600;font-size:13px;}
   .cfg-item .cfg-head .c-del{color:var(--red);cursor:pointer;font-size:12px;}
-
   .hint{font-size:12px;color:var(--sub);margin:6px 0 14px;}
   .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#1f2d3d;color:#fff;padding:11px 20px;border-radius:10px;font-size:13px;z-index:99;opacity:0;transition:.3s;pointer-events:none;}
   .toast.show{opacity:1;}
-
   @media(max-width:900px){.module{grid-column:span 12 !important;}}
 </style>
 </head>
@@ -161,21 +159,28 @@
     </div>
     <div class="toolbar">
       <button class="btn" onclick="openSources()">数据源管理</button>
-      <button class="btn" onclick="openWidgets()">模块管理</button>
-      <button class="btn primary" onclick="addWidgetMenu()">+ 新建模块</button>
+      <button class="btn" onclick="openWidgets()">组件管理</button>
+      <button class="btn primary" onclick="addWidgetMenu()">+ 添加组件</button>
       <button class="btn ghost" onclick="loadExample()">载入示例</button>
       <button class="btn ghost" onclick="resetAll()">重置</button>
     </div>
+  </div>
+
+  <!-- 看板页签栏（参考 WPS 页面管理） -->
+  <div class="tabs-wrap">
+    <span class="tabs-label">看板</span>
+    <div class="dash-tabs" id="dashTabs"></div>
+    <span class="dash-add" onclick="addDashboard()" title="新建看板">+ 新建看板</span>
   </div>
 
   <div id="canvas"></div>
 
 </div>
 
-<!-- 新建模块类型选择 -->
+<!-- 新建组件类型选择 -->
 <div class="modal-mask hidden" id="typeModal">
   <div class="modal" style="max-width:720px">
-    <div class="modal-head"><h3>选择模块组件类型</h3><span class="x" onclick="closeModal('typeModal')">&times;</span></div>
+    <div class="modal-head"><h3>选择组件类型</h3><span class="x" onclick="closeModal('typeModal')">&times;</span></div>
     <div class="modal-body" id="typeList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;"></div>
   </div>
 </div>
@@ -183,52 +188,35 @@
 <!-- 数据源管理模态 -->
 <div class="modal-mask hidden" id="srcModal">
   <div class="modal">
-    <div class="modal-head"><h3>数据源管理</h3><span class="x" onclick="closeModal('srcModal')">&times;</span></div>
+    <div class="modal-head"><h3>数据源管理（全局共享，各看板均可引用）</h3><span class="x" onclick="closeModal('srcModal')">&times;</span></div>
     <div class="modal-body">
       <div class="split">
-        <div class="sidelist">
-          <div class="f-label">数据源列表</div>
-          <div id="srcList"></div>
-          <button class="btn sm" onclick="addSource()">+ 新建数据源</button>
-        </div>
+        <div class="sidelist"><div class="f-label">数据源列表</div><div id="srcList"></div><button class="btn sm" onclick="addSource()">+ 新建数据源</button></div>
         <div id="srcEditor"></div>
       </div>
     </div>
-    <div class="modal-foot">
-      <button class="btn" onclick="closeModal('srcModal')">取消</button>
-      <button class="btn primary" onclick="saveSources()">保存全部</button>
-    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('srcModal')">取消</button><button class="btn primary" onclick="saveSources()">保存全部</button></div>
   </div>
 </div>
 
-<!-- 模块管理模态 -->
+<!-- 组件管理模态 -->
 <div class="modal-mask hidden" id="widgetModal">
   <div class="modal">
-    <div class="modal-head"><h3>模块管理</h3><span class="x" onclick="closeModal('widgetModal')">&times;</span></div>
+    <div class="modal-head"><h3>组件管理（当前看板）</h3><span class="x" onclick="closeModal('widgetModal')">&times;</span></div>
     <div class="modal-body"><div id="widgetList"></div></div>
     <div class="modal-foot"><button class="btn" onclick="closeModal('widgetModal')">关闭</button></div>
   </div>
 </div>
 
-<!-- 模块配置模态 -->
+<!-- 组件配置模态 -->
 <div class="modal-mask hidden" id="widgetCfgModal">
   <div class="modal">
-    <div class="modal-head"><h3>模块配置</h3><span class="x" onclick="closeModal('widgetCfgModal')">&times;</span></div>
+    <div class="modal-head"><h3>组件配置</h3><span class="x" onclick="closeModal('widgetCfgModal')">&times;</span></div>
     <div class="modal-body">
-      <div class="cfg-row" style="margin-bottom:6px">
-        <input id="cfgName" placeholder="模块名称" style="flex:1;font-weight:600">
-        <label style="min-width:auto;color:var(--ink);font-weight:600">宽度</label>
-        <select id="cfgSpan">
-          <option value="12">全宽</option><option value="8">2/3 宽</option>
-          <option value="6">1/2 宽</option><option value="4">1/3 宽</option><option value="3">1/4 宽</option>
-        </select>
-      </div>
+      <div class="cfg-row" style="margin-bottom:6px"><input id="cfgName" placeholder="组件名称" style="flex:1;font-weight:600"><label style="min-width:auto;font-weight:600">宽度</label><select id="cfgSpan"><option value="12">全宽</option><option value="8">2/3 宽</option><option value="6">1/2 宽</option><option value="4">1/3 宽</option><option value="3">1/4 宽</option></select></div>
       <div id="cfgBody"></div>
     </div>
-    <div class="modal-foot">
-      <button class="btn" onclick="closeModal('widgetCfgModal')">取消</button>
-      <button class="btn primary" onclick="saveWidget()">保存配置</button>
-    </div>
+    <div class="modal-foot"><button class="btn" onclick="closeModal('widgetCfgModal')">取消</button><button class="btn primary" onclick="saveWidget()">保存配置</button></div>
   </div>
 </div>
 
@@ -247,9 +235,9 @@ const AGGS=["sum","avg","count","max","min"];
 const COLORS=["blue","green","gray","purple","teal","orange","pink","red"];
 const TYPE_LABEL={kpi:"KPI 指标卡组",cards:"卡片组",rank:"排行榜",table:"明细表",stat:"统计数字卡",text:"文本模块",chart:"图表",gauge:"仪表盘/进度环"};
 const CHART_TYPES=["bar","barH","line","area","pie","doughnut","funnel","radar"];
-const LS_KEY="dashBuilder_v2";
+const LS_KEY="dashBuilder_v3";
 
-/* ================= 状态 ================= */
+/* ================= 状态（多看板） ================= */
 function buildExample(){
   const sid=uid("s");
   const F=(name,type)=>({id:uid("f"),name,type});
@@ -265,46 +253,108 @@ function buildExample(){
     ["余姚腾云","腾势",18,14,4,13,6]
   ];
   const rows=data.map(arr=>{ const r={}; f.forEach((fd,i)=>r[fd.id]=arr[i]); return r; });
+  const dashId=uid("d");
   return {
-    title:"汽车品牌 · 宁波品牌部 销售业务运营看板",
-    sub:"多数据源 · 组件丰富 · 栅格自由布局",
     sources:[{id:sid,name:"门店销售数据",fields:f,rows}],
-    widgets:[
-      {id:uid("w"),name:"核心指标",type:"kpi",span:12,sourceId:sid,config:{items:[
-        {name:"当月订单",kind:"field",fieldId:orderX,aggregate:"sum",isPct:false,note:"",color:"blue"},
-        {name:"当月交车",kind:"field",fieldId:carX,aggregate:"sum",isPct:false,note:"",color:"green"},
-        {name:"当月订交比",kind:"ratio",numId:carX,denId:orderX,isPct:true,note:"交车/订单",color:"gray"},
-        {name:"直销率",kind:"ratio",numId:directX,denId:carX,isPct:true,note:"直销量/总交车",color:"purple"},
-        {name:"按揭渗透率",kind:"ratio",numId:mortX,denId:carX,isPct:true,note:"按揭交车/总交车",color:"teal"}
-      ]}},
-      {id:uid("w"),name:"订单柱状图",type:"chart",span:6,sourceId:sid,config:{chartType:"bar",xFieldId:nameX,valueFieldIds:[orderX,carX],aggregate:"sum"}},
-      {id:uid("w"),name:"交车按品牌分布",type:"chart",span:6,sourceId:sid,config:{chartType:"doughnut",xFieldId:brandX,valueFieldIds:[carX],aggregate:"sum"}},
-      {id:uid("w"),name:"门店明细",type:"cards",span:12,sourceId:sid,config:{groupFieldId:nameX,tagFieldId:brandX,numFieldIds:[orderX,carX,pendX],ratioFieldIds:[{numId:carX,denId:orderX},{numId:directX,denId:carX},{numId:mortX,denId:carX}]}},
-      {id:uid("w"),name:"订单排行榜",type:"rank",span:6,sourceId:sid,config:{fieldId:orderX,order:"desc",topN:5,groupFieldId:nameX}},
-      {id:uid("w"),name:"总交车进度",type:"gauge",span:6,sourceId:sid,config:{label:"本月交车达成",kind:"field",fieldId:carX,aggregate:"sum",max:700,suffix:"辆",color:"teal"}},
-      {id:uid("w"),name:"明细表",type:"table",span:12,sourceId:sid,config:{columnIds:[nameX,brandX,orderX,carX,pendX]}}
-    ]
+    dashboards:[{
+      id:dashId,name:"销售运营看板",
+      widgets:[
+        {id:uid("w"),name:"核心指标",type:"kpi",span:12,sourceId:sid,config:{items:[
+          {name:"当月订单",kind:"field",fieldId:orderX,aggregate:"sum",isPct:false,note:"",color:"blue"},
+          {name:"当月交车",kind:"field",fieldId:carX,aggregate:"sum",isPct:false,note:"",color:"green"},
+          {name:"当月订交比",kind:"ratio",numId:carX,denId:orderX,isPct:true,note:"交车/订单",color:"gray"},
+          {name:"直销率",kind:"ratio",numId:directX,denId:carX,isPct:true,note:"直销量/总交车",color:"purple"},
+          {name:"按揭渗透率",kind:"ratio",numId:mortX,denId:carX,isPct:true,note:"按揭交车/总交车",color:"teal"}
+        ]}},
+        {id:uid("w"),name:"订单柱状图",type:"chart",span:6,sourceId:sid,config:{chartType:"bar",xFieldId:nameX,valueFieldIds:[orderX,carX],aggregate:"sum"}},
+        {id:uid("w"),name:"交车按品牌分布",type:"chart",span:6,sourceId:sid,config:{chartType:"doughnut",xFieldId:brandX,valueFieldIds:[carX],aggregate:"sum"}},
+        {id:uid("w"),name:"门店明细",type:"cards",span:12,sourceId:sid,config:{groupFieldId:nameX,tagFieldId:brandX,numFieldIds:[orderX,carX,pendX],ratioFieldIds:[{numId:carX,denId:orderX},{numId:directX,denId:carX},{numId:mortX,denId:carX}]}},
+        {id:uid("w"),name:"订单排行榜",type:"rank",span:6,sourceId:sid,config:{fieldId:orderX,order:"desc",topN:5,groupFieldId:nameX}},
+        {id:uid("w"),name:"总交车进度",type:"gauge",span:6,sourceId:sid,config:{label:"本月交车达成",kind:"field",fieldId:carX,aggregate:"sum",max:700,suffix:"辆",color:"teal"}},
+        {id:uid("w"),name:"明细表",type:"table",span:12,sourceId:sid,config:{columnIds:[nameX,brandX,orderX,carX,pendX]}}
+      ]
+    }],
+    currentId:dashId
   };
 }
-const EMBEDDED_STATE={"title":"汽车品牌 · 宁波品牌部 销售业务运营看板","sub":"多数据源 · 组件丰富 · 栅格自由布局","sources":[{"id":"smswvhfzy1z0","name":"门店销售数据","fields":[{"id":"fmswvhfzy36s","name":"门店","type":"text"},{"id":"fmswvhfzygt","name":"品牌","type":"text"},{"id":"fmswvhfzy3zo","name":"订单","type":"number"},{"id":"fmswvhfzy1n4","name":"交车","type":"number"},{"id":"fmswvhfzy7b7","name":"待交","type":"number"},{"id":"fmswvhfzy23r","name":"直销量","type":"number"},{"id":"fmswvhfzy3sk","name":"按揭交车","type":"number"}],"rows":[{"fmswvhfzy36s":"宁波卓信","fmswvhfzygt":"海洋","fmswvhfzy3zo":97,"fmswvhfzy1n4":89,"fmswvhfzy7b7":8,"fmswvhfzy23r":88,"fmswvhfzy3sk":51},{"fmswvhfzy36s":"余姚东兴","fmswvhfzygt":"王朝","fmswvhfzy3zo":95,"fmswvhfzy1n4":82,"fmswvhfzy7b7":13,"fmswvhfzy23r":67,"fmswvhfzy3sk":41},{"fmswvhfzy36s":"余姚东吉","fmswvhfzygt":"海洋","fmswvhfzy3zo":90,"fmswvhfzy1n4":65,"fmswvhfzy7b7":25,"fmswvhfzy23r":65,"fmswvhfzy3sk":35},{"fmswvhfzy36s":"宁波东御","fmswvhfzygt":"王朝","fmswvhfzy3zo":68,"fmswvhfzy1n4":54,"fmswvhfzy7b7":14,"fmswvhfzy23r":47,"fmswvhfzy3sk":26},{"fmswvhfzy36s":"宁波丰澜","fmswvhfzygt":"方程豹","fmswvhfzy3zo":50,"fmswvhfzy1n4":53,"fmswvhfzy7b7":-3,"fmswvhfzy23r":51,"fmswvhfzy3sk":31},{"fmswvhfzy36s":"宁波卓御","fmswvhfzygt":"海洋","fmswvhfzy3zo":37,"fmswvhfzy1n4":29,"fmswvhfzy7b7":8,"fmswvhfzy23r":29,"fmswvhfzy3sk":17},{"fmswvhfzy36s":"慈溪丰浩","fmswvhfzygt":"方程豹","fmswvhfzy3zo":36,"fmswvhfzy1n4":28,"fmswvhfzy7b7":8,"fmswvhfzy23r":28,"fmswvhfzy3sk":11},{"fmswvhfzy36s":"东江卓越","fmswvhfzygt":"长城","fmswvhfzy3zo":34,"fmswvhfzy1n4":25,"fmswvhfzy7b7":9,"fmswvhfzy23r":21,"fmswvhfzy3sk":9},{"fmswvhfzy36s":"慈溪创信","fmswvhfzygt":"长城","fmswvhfzy3zo":24,"fmswvhfzy1n4":10,"fmswvhfzy7b7":14,"fmswvhfzy23r":9,"fmswvhfzy3sk":5},{"fmswvhfzy36s":"宁波腾和","fmswvhfzygt":"腾势","fmswvhfzy3zo":22,"fmswvhfzy1n4":29,"fmswvhfzy7b7":-7,"fmswvhfzy23r":26,"fmswvhfzy3sk":11},{"fmswvhfzy36s":"余姚丰浩","fmswvhfzygt":"方程豹","fmswvhfzy3zo":21,"fmswvhfzy1n4":25,"fmswvhfzy7b7":-4,"fmswvhfzy23r":23,"fmswvhfzy3sk":13},{"fmswvhfzy36s":"宁波丰洛","fmswvhfzygt":"方程豹","fmswvhfzy3zo":21,"fmswvhfzy1n4":21,"fmswvhfzy7b7":0,"fmswvhfzy23r":21,"fmswvhfzy3sk":14},{"fmswvhfzy36s":"余姚腾云","fmswvhfzygt":"腾势","fmswvhfzy3zo":18,"fmswvhfzy1n4":14,"fmswvhfzy7b7":4,"fmswvhfzy23r":13,"fmswvhfzy3sk":6}]}],"widgets":[{"id":"wmswvhfzy137","name":"核心指标","type":"kpi","span":12,"sourceId":"smswvhfzy1z0","config":{"items":[{"name":"当月订单","kind":"field","fieldId":"fmswvhfzy3zo","aggregate":"sum","isPct":false,"note":"","color":"blue"},{"name":"当月交车","kind":"field","fieldId":"fmswvhfzy1n4","aggregate":"sum","isPct":false,"note":"","color":"green"},{"name":"当月订交比","kind":"ratio","numId":"fmswvhfzy1n4","denId":"fmswvhfzy3zo","isPct":true,"note":"交车/订单","color":"gray"},{"name":"直销率","kind":"ratio","numId":"fmswvhfzy23r","denId":"fmswvhfzy1n4","isPct":true,"note":"直销量/总交车","color":"purple"},{"name":"按揭渗透率","kind":"ratio","numId":"fmswvhfzy3sk","denId":"fmswvhfzy1n4","isPct":true,"note":"按揭交车/总交车","color":"teal"}]}},{"id":"wmswvhfzy34f","name":"订单柱状图","type":"chart","span":6,"sourceId":"smswvhfzy1z0","config":{"chartType":"bar","xFieldId":"fmswvhfzy36s","valueFieldIds":["fmswvhfzy3zo","fmswvhfzy1n4"],"aggregate":"sum"}},{"id":"wmswvhfzy3l","name":"交车按品牌分布","type":"chart","span":6,"sourceId":"smswvhfzy1z0","config":{"chartType":"doughnut","xFieldId":"fmswvhfzygt","valueFieldIds":["fmswvhfzy1n4"],"aggregate":"sum"}},{"id":"wmswvhfzy5v3","name":"门店明细","type":"cards","span":12,"sourceId":"smswvhfzy1z0","config":{"groupFieldId":"fmswvhfzy36s","tagFieldId":"fmswvhfzygt","numFieldIds":["fmswvhfzy3zo","fmswvhfzy1n4","fmswvhfzy7b7"],"ratioFieldIds":[{"numId":"fmswvhfzy1n4","denId":"fmswvhfzy3zo"},{"numId":"fmswvhfzy23r","denId":"fmswvhfzy1n4"},{"numId":"fmswvhfzy3sk","denId":"fmswvhfzy1n4"}]}},{"id":"wmswvhfzyi2","name":"订单排行榜","type":"rank","span":6,"sourceId":"smswvhfzy1z0","config":{"fieldId":"fmswvhfzy3zo","order":"desc","topN":5,"groupFieldId":"fmswvhfzy36s"}},{"id":"wmswvhfzy1c7","name":"总交车进度","type":"gauge","span":6,"sourceId":"smswvhfzy1z0","config":{"label":"本月交车达成","kind":"field","fieldId":"fmswvhfzy1n4","aggregate":"sum","max":700,"suffix":"辆","color":"teal"}},{"id":"wmswvhfzy560","name":"明细表","type":"table","span":12,"sourceId":"smswvhfzy1z0","config":{"columnIds":["fmswvhfzy36s","fmswvhfzygt","fmswvhfzy3zo","fmswvhfzy1n4","fmswvhfzy7b7"]}}]};
-let state = loadState() || JSON.parse(JSON.stringify(EMBEDDED_STATE));
+function migrate(s){
+  if(s && !s.dashboards){
+    // 旧版单看板结构迁移
+    if(s.widgets){ const d={id:uid("d"),name:"看板1",widgets:s.widgets}; s.dashboards=[d]; s.currentId=d.id; delete s.widgets; }
+  }
+  if(!s || !s.dashboards || !s.dashboards.length) s=buildExample();
+  return s;
+}
+const EMBEDDED_STATE={"sources":[{"id":"smswwbtuj40s","name":"门店销售数据","fields":[{"id":"fmswwbtuj288","name":"门店","type":"text"},{"id":"fmswwbtuj2iv","name":"品牌","type":"text"},{"id":"fmswwbtuj35v","name":"订单","type":"number"},{"id":"fmswwbtuj5qa","name":"交车","type":"number"},{"id":"fmswwbtuj75u","name":"待交","type":"number"},{"id":"fmswwbtuj2by","name":"直销量","type":"number"},{"id":"fmswwbtuj3wy","name":"按揭交车","type":"number"}],"rows":[{"fmswwbtuj288":"宁波卓信","fmswwbtuj2iv":"海洋","fmswwbtuj35v":97,"fmswwbtuj5qa":89,"fmswwbtuj75u":8,"fmswwbtuj2by":88,"fmswwbtuj3wy":51},{"fmswwbtuj288":"余姚东兴","fmswwbtuj2iv":"王朝","fmswwbtuj35v":95,"fmswwbtuj5qa":82,"fmswwbtuj75u":13,"fmswwbtuj2by":67,"fmswwbtuj3wy":41},{"fmswwbtuj288":"余姚东吉","fmswwbtuj2iv":"海洋","fmswwbtuj35v":90,"fmswwbtuj5qa":65,"fmswwbtuj75u":25,"fmswwbtuj2by":65,"fmswwbtuj3wy":35},{"fmswwbtuj288":"宁波东御","fmswwbtuj2iv":"王朝","fmswwbtuj35v":68,"fmswwbtuj5qa":54,"fmswwbtuj75u":14,"fmswwbtuj2by":47,"fmswwbtuj3wy":26},{"fmswwbtuj288":"宁波丰澜","fmswwbtuj2iv":"方程豹","fmswwbtuj35v":50,"fmswwbtuj5qa":53,"fmswwbtuj75u":-3,"fmswwbtuj2by":51,"fmswwbtuj3wy":31},{"fmswwbtuj288":"宁波卓御","fmswwbtuj2iv":"海洋","fmswwbtuj35v":37,"fmswwbtuj5qa":29,"fmswwbtuj75u":8,"fmswwbtuj2by":29,"fmswwbtuj3wy":17},{"fmswwbtuj288":"慈溪丰浩","fmswwbtuj2iv":"方程豹","fmswwbtuj35v":36,"fmswwbtuj5qa":28,"fmswwbtuj75u":8,"fmswwbtuj2by":28,"fmswwbtuj3wy":11},{"fmswwbtuj288":"东江卓越","fmswwbtuj2iv":"长城","fmswwbtuj35v":34,"fmswwbtuj5qa":25,"fmswwbtuj75u":9,"fmswwbtuj2by":21,"fmswwbtuj3wy":9},{"fmswwbtuj288":"慈溪创信","fmswwbtuj2iv":"长城","fmswwbtuj35v":24,"fmswwbtuj5qa":10,"fmswwbtuj75u":14,"fmswwbtuj2by":9,"fmswwbtuj3wy":5},{"fmswwbtuj288":"宁波腾和","fmswwbtuj2iv":"腾势","fmswwbtuj35v":22,"fmswwbtuj5qa":29,"fmswwbtuj75u":-7,"fmswwbtuj2by":26,"fmswwbtuj3wy":11},{"fmswwbtuj288":"余姚丰浩","fmswwbtuj2iv":"方程豹","fmswwbtuj35v":21,"fmswwbtuj5qa":25,"fmswwbtuj75u":-4,"fmswwbtuj2by":23,"fmswwbtuj3wy":13},{"fmswwbtuj288":"宁波丰洛","fmswwbtuj2iv":"方程豹","fmswwbtuj35v":21,"fmswwbtuj5qa":21,"fmswwbtuj75u":0,"fmswwbtuj2by":21,"fmswwbtuj3wy":14},{"fmswwbtuj288":"余姚腾云","fmswwbtuj2iv":"腾势","fmswwbtuj35v":18,"fmswwbtuj5qa":14,"fmswwbtuj75u":4,"fmswwbtuj2by":13,"fmswwbtuj3wy":6}]}],"dashboards":[{"id":"dmswwbtuj1k4","name":"销售运营看板","widgets":[{"id":"wmswwbtuj3yo","name":"核心指标","type":"kpi","span":12,"sourceId":"smswwbtuj40s","config":{"items":[{"name":"当月订单","kind":"field","fieldId":"fmswwbtuj35v","aggregate":"sum","isPct":false,"note":"","color":"blue"},{"name":"当月交车","kind":"field","fieldId":"fmswwbtuj5qa","aggregate":"sum","isPct":false,"note":"","color":"green"},{"name":"当月订交比","kind":"ratio","numId":"fmswwbtuj5qa","denId":"fmswwbtuj35v","isPct":true,"note":"交车/订单","color":"gray"},{"name":"直销率","kind":"ratio","numId":"fmswwbtuj2by","denId":"fmswwbtuj5qa","isPct":true,"note":"直销量/总交车","color":"purple"},{"name":"按揭渗透率","kind":"ratio","numId":"fmswwbtuj3wy","denId":"fmswwbtuj5qa","isPct":true,"note":"按揭交车/总交车","color":"teal"}]}},{"id":"wmswwbtuj4lr","name":"订单柱状图","type":"chart","span":6,"sourceId":"smswwbtuj40s","config":{"chartType":"bar","xFieldId":"fmswwbtuj288","valueFieldIds":["fmswwbtuj35v","fmswwbtuj5qa"],"aggregate":"sum"}},{"id":"wmswwbtuj473","name":"交车按品牌分布","type":"chart","span":6,"sourceId":"smswwbtuj40s","config":{"chartType":"doughnut","xFieldId":"fmswwbtuj2iv","valueFieldIds":["fmswwbtuj5qa"],"aggregate":"sum"}},{"id":"wmswwbtuj3i5","name":"门店明细","type":"cards","span":12,"sourceId":"smswwbtuj40s","config":{"groupFieldId":"fmswwbtuj288","tagFieldId":"fmswwbtuj2iv","numFieldIds":["fmswwbtuj35v","fmswwbtuj5qa","fmswwbtuj75u"],"ratioFieldIds":[{"numId":"fmswwbtuj5qa","denId":"fmswwbtuj35v"},{"numId":"fmswwbtuj2by","denId":"fmswwbtuj5qa"},{"numId":"fmswwbtuj3wy","denId":"fmswwbtuj5qa"}]}},{"id":"wmswwbtuj3g0","name":"订单排行榜","type":"rank","span":6,"sourceId":"smswwbtuj40s","config":{"fieldId":"fmswwbtuj35v","order":"desc","topN":5,"groupFieldId":"fmswwbtuj288"}},{"id":"wmswwbtujtr","name":"总交车进度","type":"gauge","span":6,"sourceId":"smswwbtuj40s","config":{"label":"本月交车达成","kind":"field","fieldId":"fmswwbtuj5qa","aggregate":"sum","max":700,"suffix":"辆","color":"teal"}},{"id":"wmswwbtujcp","name":"明细表","type":"table","span":12,"sourceId":"smswwbtuj40s","config":{"columnIds":["fmswwbtuj288","fmswwbtuj2iv","fmswwbtuj35v","fmswwbtuj5qa","fmswwbtuj75u"]}}]}],"currentId":"dmswwbtuj1k4"};
+let state = migrate(loadState()) || JSON.parse(JSON.stringify(EMBEDDED_STATE));
+// 未保存过本地数据时，展示内嵌看板数据
 function loadState(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){ return null; } }
 function saveState(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(state)); }catch(e){} }
+function currentDash(){ return state.dashboards.find(d=>d.id===state.currentId)||state.dashboards[0]; }
 function getSource(id){ return state.sources.find(s=>s.id===id); }
 function fieldName(s,fid){ const f=s.fields.find(x=>x.id===fid); return f?f.name:""; }
 function fieldVal(s,row,fid){ return row[fid]===undefined?"":row[fid]; }
 
+/* ================= 看板（页面）管理 ================= */
+function renderTabs(){
+  const tabs=document.getElementById("dashTabs");
+  tabs.innerHTML = state.dashboards.map(d=>`
+    <div class="dash-tab ${d.id===state.currentId?"active":""}" onclick="switchDashboard('${d.id}')">
+      <span>${esc(d.name)}</span>
+      <button class="menu-btn" onclick="event.stopPropagation();openDashMenu(event,'${d.id}')" title="管理">&#8942;</button>
+    </div>`).join("");
+}
+function switchDashboard(id){ if(id===state.currentId) return; state.currentId=id; saveState(); render(); }
+function addDashboard(){
+  const n=state.dashboards.length+1;
+  const d={id:uid("d"),name:"新看板"+n,widgets:[]};
+  state.dashboards.push(d); state.currentId=d.id; saveState(); render(); toast("已新建看板："+d.name);
+}
+function renameDashboard(id){
+  const d=state.dashboards.find(x=>x.id===id); if(!d) return;
+  const v=prompt("重命名看板：",d.name); if(v&&v.trim()){ d.name=v.trim(); saveState(); renderTabs(); }
+}
+function dupDashboard(id){
+  const d=state.dashboards.find(x=>x.id===id); if(!d) return;
+  const copy=JSON.parse(JSON.stringify(d)); copy.id=uid("d"); copy.name=d.name+"(副本)";
+  copy.widgets=copy.widgets.map(w=>{ w.id=uid("w"); return w; });
+  state.dashboards.splice(state.dashboards.indexOf(d)+1,0,copy);
+  saveState(); renderTabs(); toast("已复制看板");
+}
+function delDashboard(id){
+  if(state.dashboards.length<=1){ toast("至少保留一个看板"); return; }
+  if(!confirm("确定删除该看板及其全部组件？")) return;
+  state.dashboards=state.dashboards.filter(x=>x.id!==id);
+  if(state.currentId===id) state.currentId=state.dashboards[0].id;
+  saveState(); render(); toast("看板已删除");
+}
+function openDashMenu(e,id){
+  document.querySelectorAll(".menu").forEach(m=>m.remove());
+  const menu=document.createElement("div"); menu.className="menu";
+  menu.innerHTML=`<div class="mi" onclick="renameDashboard('${id}');this.closest('.menu').remove()">重命名</div>
+    <div class="mi" onclick="dupDashboard('${id}');this.closest('.menu').remove()">复制看板</div>
+    <div class="mi danger" onclick="delDashboard('${id}');this.closest('.menu').remove()">删除看板</div>`;
+  document.body.appendChild(menu);
+  const r=menu.getBoundingClientRect();
+  menu.style.left=Math.min(e.clientX,window.innerWidth-r.width-10)+"px";
+  menu.style.top=(e.clientY+8)+"px";
+  setTimeout(()=>document.addEventListener("click",function h(){menu.remove();document.removeEventListener("click",h);}),0);
+}
+
 /* ================= 渲染 ================= */
 function render(){
   disposeCharts();
+  const dash=currentDash();
   document.getElementById("appTitle").textContent = state.title||"通用数据看板";
-  document.getElementById("appSub").textContent = state.sub||"";
+  document.getElementById("appSub").textContent = (dash?dash.name:"")+(state.sub?" · "+state.sub:"");
+  renderTabs();
   const canvas=document.getElementById("canvas");
-  if(state.widgets.length===0){
-    canvas.innerHTML='<div class="empty" style="grid-column:span 12">暂无模块，点击右上角「+ 新建模块」开始搭建看板。</div>';
+  const widgets=dash?dash.widgets:[];
+  if(!widgets.length){
+    canvas.innerHTML='<div class="empty" style="grid-column:span 12">当前看板暂无组件，点击右上角「+ 添加组件」开始搭建。</div>';
     return;
   }
-  canvas.innerHTML = state.widgets.map(w=>`
+  canvas.innerHTML = widgets.map(w=>`
     <div class="module" style="--span:${w.span||12}">
       <div class="module-bar">
         <span class="m-title">${esc(w.name)} <span style="font-size:12px;color:var(--sub);font-weight:400">(${TYPE_LABEL[w.type]||w.type})</span></span>
@@ -321,7 +371,7 @@ function render(){
 }
 function renderWidget(w){
   const s=getSource(w.sourceId);
-  if(!s){ return '<div class="empty">数据源已删除，请重新配置模块。</div>'; }
+  if(!s){ return '<div class="empty">数据源已删除，请重新配置组件。</div>'; }
   switch(w.type){
     case "kpi": return renderKpi(w,s);
     case "stat": return renderStat(w,s);
@@ -334,7 +384,6 @@ function renderWidget(w){
   }
   return "";
 }
-/* 聚合 */
 function fieldAgg(s,fieldId,agg){
   const vals=s.rows.map(r=>num(r[fieldId]));
   if(agg==="sum") return vals.reduce((a,b)=>a+b,0);
@@ -344,265 +393,89 @@ function fieldAgg(s,fieldId,agg){
   if(agg==="min") return vals.length?Math.min(...vals):0;
   return 0;
 }
-function ratioTotal(s,item){
-  const n=s.rows.reduce((a,r)=>a+num(r[item.numId]),0), d=s.rows.reduce((a,r)=>a+num(r[item.denId]),0);
-  return d===0?0:n/d;
-}
-/* KPI */
+function ratioTotal(s,item){ const n=s.rows.reduce((a,r)=>a+num(r[item.numId]),0), d=s.rows.reduce((a,r)=>a+num(r[item.denId]),0); return d===0?0:n/d; }
 function renderKpi(w,s){
   const items=(w.config.items||[]).filter(i=>i.kind==="ratio" ? (i.numId&&i.denId) : i.fieldId);
-  if(!items.length) return '<div class="empty">KPI 模块暂无有效指标，请配置。</div>';
-  return `<div class="kpi-grid">${items.map(it=>{
-    let val = it.kind==="field" ? fieldAgg(s,it.fieldId,it.aggregate) : ratioTotal(s,it);
-    const display = it.isPct ? pct(val) : (Math.round(val*100)/100);
-    const c="c-"+(it.color||"gray");
-    return `<div class="kpi ${c}"><div class="k-label">${esc(it.name||fieldName(s,it.fieldId)||"-")}</div><div class="k-value">${esc(display)}</div>${it.note?`<div class="k-sub">${esc(it.note)}</div>`:""}</div>`;
-  }).join("")}</div>`;
+  if(!items.length) return '<div class="empty">KPI 组件暂无有效指标，请配置。</div>';
+  return `<div class="kpi-grid">${items.map(it=>{ const val=it.kind==="field"?fieldAgg(s,it.fieldId,it.aggregate):ratioTotal(s,it); const display=it.isPct?pct(val):(Math.round(val*100)/100); const c="c-"+(it.color||"gray"); return `<div class="kpi ${c}"><div class="k-label">${esc(it.name||fieldName(s,it.fieldId)||"-")}</div><div class="k-value">${esc(display)}</div>${it.note?`<div class="k-sub">${esc(it.note)}</div>`:""}</div>`; }).join("")}</div>`;
 }
-/* 统计数字卡 */
-function renderStat(w,s){
-  const c=w.config, val=fieldAgg(s,c.fieldId,c.aggregate);
-  const display = c.isPct ? pct(val) : (Math.round(val*100)/100);
-  return `<div class="stat c-${c.color||"blue"}"><div class="s-label">${esc(c.label||fieldName(s,c.fieldId)||"")}</div><div class="s-value">${esc(display)}${c.suffix?`<span class="s-suffix">${esc(c.suffix)}</span>`:""}</div></div>`;
-}
-/* 仪表盘/进度环 */
-function renderGauge(w,s){
-  const c=w.config;
-  let val = c.kind==="ratio" ? ratioTotal(s,{numId:c.numId,denId:c.denId})*100 : fieldAgg(s,c.fieldId,c.aggregate);
-  const max = c.max||100;
-  const p = max? Math.min(val/max*100,100):0;
-  return `<div class="chart-el" data-chart-gauge="${w.id}"></div>`;
-}
-/* 图表容器 */
-function renderChart(w,s){
-  const c=w.config;
-  const ok = c.chartType && (c.xFieldId || c.chartType==="radar") && (c.valueFieldIds||[]).some(Boolean);
-  if(!ok) return '<div class="empty">图表未配置完整（需选择 X 轴字段与数值字段）。</div>';
-  return `<div class="chart-el" data-chart="${w.id}"></div>`;
-}
-/* 卡片组 */
+function renderStat(w,s){ const c=w.config, val=fieldAgg(s,c.fieldId,c.aggregate); const display=c.isPct?pct(val):(Math.round(val*100)/100); return `<div class="stat c-${c.color||"blue"}"><div class="s-label">${esc(c.label||fieldName(s,c.fieldId)||"")}</div><div class="s-value">${esc(display)}${c.suffix?`<span class="s-suffix">${esc(c.suffix)}</span>`:""}</div></div>`; }
+function renderGauge(w,s){ return `<div class="chart-el" data-chart-gauge="${w.id}"></div>`; }
+function renderChart(w,s){ const c=w.config; const ok=c.chartType&&(c.xFieldId||c.chartType==="radar")&&(c.valueFieldIds||[]).some(Boolean); if(!ok) return '<div class="empty">图表未配置完整（需选择 X 轴字段与数值字段）。</div>'; return `<div class="chart-el" data-chart="${w.id}"></div>`; }
 function renderCards(w,s){
-  const g=w.config.groupFieldId;
-  const rows=s.rows;
+  const g=w.config.groupFieldId, rows=s.rows;
   if(!rows.length) return '<div class="empty">该数据源暂无数据。</div>';
-  return `<div class="shop-grid">${rows.map((r,idx)=>{
-    const color=["teal","purple","orange","green","pink","blue","red"][idx%7];
-    const tag = w.config.tagFieldId ? esc(fieldVal(s,r,w.config.tagFieldId)) : "";
-    const numIds = w.config.numFieldIds||[];
-    const ratioIds = w.config.ratioFieldIds||[];
-    let nums=numIds.filter(Boolean).map(fid=>{ const v=num(r[fid]); const neg=v<0?"num-neg":""; return `<div class="sn"><span class="l">${esc(fieldName(s,fid))}</span><span class="v ${neg}">${Math.round(v*100)/100}</span></div>`; }).join("");
-    let ratios=ratioIds.filter(x=>x.numId&&x.denId).map(x=>{ const n=num(r[x.numId]),d=num(r[x.denId]); const v=d===0?0:n/d; const p=Math.min(Math.max(v*100,0),100); return `<div class="sr"><div class="top"><span class="lab">${esc(fieldName(s,x.numId)+" / "+fieldName(s,x.denId))}</span><span class="val">${pct(v)}</span></div><div class="bar bar-${color}"><i style="width:${p}%"></i></div></div>`; }).join("");
-    return `<div class="shop"><div class="s-head bg-${color}"><span class="s-name">${esc(g?fieldVal(s,r,g):"")}</span>${tag?`<span class="s-brand">${tag}</span>`:""}</div><div class="s-body">${nums?`<div class="s-nums">${nums}</div>`:""}${ratios?`<div class="s-ratios">${ratios}</div>`:""}</div></div>`;
-  }).join("")}</div>`;
+  return `<div class="shop-grid">${rows.map((r,idx)=>{ const color=["teal","purple","orange","green","pink","blue","red"][idx%7]; const tag=w.config.tagFieldId?esc(fieldVal(s,r,w.config.tagFieldId)):""; const numIds=w.config.numFieldIds||[]; const ratioIds=w.config.ratioFieldIds||[]; let nums=numIds.filter(Boolean).map(fid=>{ const v=num(r[fid]); const neg=v<0?"num-neg":""; return `<div class="sn"><span class="l">${esc(fieldName(s,fid))}</span><span class="v ${neg}">${Math.round(v*100)/100}</span></div>`; }).join(""); let ratios=ratioIds.filter(x=>x.numId&&x.denId).map(x=>{ const n=num(r[x.numId]),d=num(r[x.denId]); const v=d===0?0:n/d; const p=Math.min(Math.max(v*100,0),100); return `<div class="sr"><div class="top"><span class="lab">${esc(fieldName(s,x.numId)+" / "+fieldName(s,x.denId))}</span><span class="val">${pct(v)}</span></div><div class="bar bar-${color}"><i style="width:${p}%"></i></div></div>`; }).join(""); return `<div class="shop"><div class="s-head bg-${color}"><span class="s-name">${esc(g?fieldVal(s,r,g):"")}</span>${tag?`<span class="s-brand">${tag}</span>`:""}</div><div class="s-body">${nums?`<div class="s-nums">${nums}</div>`:""}${ratios?`<div class="s-ratios">${ratios}</div>`:""}</div></div>`; }).join("")}</div>`;
 }
-/* 排行榜 */
 function renderRank(w,s){
-  const fid=w.config.fieldId;
-  if(!fid) return '<div class="empty">排行榜未配置排序字段。</div>';
-  const topN=w.config.topN||10;
-  const g=w.config.groupFieldId||"";
+  const fid=w.config.fieldId; if(!fid) return '<div class="empty">排行榜未配置排序字段。</div>';
+  const topN=w.config.topN||10, g=w.config.groupFieldId||"";
   const arr=s.rows.slice().sort((a,b)=>num(b[fid])-num(a[fid]));
-  const final = w.config.order==="asc" ? arr.slice().reverse().slice(0,topN) : arr.slice(0,topN);
+  const final=w.config.order==="asc"?arr.slice().reverse().slice(0,topN):arr.slice(0,topN);
   return `<div class="rank">${final.map((r,i)=>{ const label=g?fieldVal(s,r,g):(Object.keys(r)[0]||""); return `<div class="rk"><span class="idx">${i+1}</span><span class="rk-name">${esc(label)}</span><span class="rk-val">${Math.round(num(r[fid])*100)/100}</span></div>`; }).join("")}</div>`;
 }
-/* 明细表 */
-function renderTable(w,s){
-  const cols=(w.config.columnIds||[]).filter(Boolean);
-  if(!cols.length) return '<div class="empty">明细表未配置展示字段。</div>';
-  return `<table class="detail"><thead><tr>${cols.map(fid=>`<th>${esc(fieldName(s,fid))}</th>`).join("")}</tr></thead><tbody>${s.rows.map(r=>`<tr>${cols.map(fid=>`<td>${esc(fieldVal(s,r,fid))}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
-}
+function renderTable(w,s){ const cols=(w.config.columnIds||[]).filter(Boolean); if(!cols.length) return '<div class="empty">明细表未配置展示字段。</div>'; return `<table class="detail"><thead><tr>${cols.map(fid=>`<th>${esc(fieldName(s,fid))}</th>`).join("")}</tr></thead><tbody>${s.rows.map(r=>`<tr>${cols.map(fid=>`<td>${esc(fieldVal(s,r,fid))}</td>`).join("")}</tr>`).join("")}</tbody></table>`; }
 
-/* ================= 图表数据与绘制 ================= */
+/* ================= 图表 ================= */
 let _charts=[];
 function disposeCharts(){ _charts.forEach(c=>{ try{c.dispose();}catch(e){} }); _charts=[]; }
-function groupByField(s,xFieldId,valueIds){
-  const map={}, order=[];
-  for(const r of s.rows){
-    const key=String(r[xFieldId]??"");
-    if(!(key in map)){ map[key]=valueIds.map(()=>0); order.push(key); }
-    valueIds.forEach((fid,i)=>{ map[key][i]+=num(r[fid]); });
-  }
-  return { labels:order, series:valueIds.map((fid,i)=>order.map(k=>map[k][i])) };
-}
+function groupByField(s,xFieldId,valueIds){ const map={},order=[]; for(const r of s.rows){ const key=String(r[xFieldId]??""); if(!(key in map)){ map[key]=valueIds.map(()=>0); order.push(key); } valueIds.forEach((fid,i)=>{ map[key][i]+=num(r[fid]); }); } return {labels:order,series:valueIds.map((fid,i)=>order.map(k=>map[k][i]))}; }
 function buildChartOption(w,s){
   const c=w.config, valueIds=(c.valueFieldIds||[]).filter(Boolean), gt=c.chartType;
   const palette=["#3b82f6","#22c55e","#f59e0b","#a855f7","#14b8a6","#ec4899","#ef4444","#9aa7b5"];
-  if(gt==="pie"||gt==="doughnut"){
-    const gb=groupByField(s,c.xFieldId,valueIds.slice(0,1));
-    return {tooltip:{trigger:"item",formatter:"{b}: {c} ({d}%)"},legend:{bottom:0},
-      series:[{type:"pie",radius:gt==="doughnut"?["42%","68%"]:"72%",data:gb.labels.map((l,i)=>({name:l,value:gb.series[0][i]})),color:palette}]};
-  }
-  if(gt==="radar"){
-    const allMax=Math.max(...s.rows.map(r=>Math.max(...valueIds.map(f=>num(r[f])))),1);
-    return {tooltip:{},legend:{bottom:0},
-      radar:{indicator:valueIds.map(fid=>({name:fieldName(s,fid),max:allMax}))},
-      series:[{type:"radar",data:[{value:valueIds.map(fid=>fieldAgg(s,fid,"sum")),areaStyle:{}}],color:palette}]};
-  }
-  if(gt==="funnel"){
-    const gb=groupByField(s,c.xFieldId,valueIds.slice(0,1));
-    const data=gb.labels.map((l,i)=>({name:l,value:gb.series[0][i]})).sort((a,b)=>b.value-a.value);
-    return {tooltip:{trigger:"item",formatter:"{b}: {c}"},series:[{type:"funnel",left:"15%",width:"70%",data,color:palette}]};
-  }
-  // bar/barH/line/area
+  if(gt==="pie"||gt==="doughnut"){ const gb=groupByField(s,c.xFieldId,valueIds.slice(0,1)); return {tooltip:{trigger:"item",formatter:"{b}: {c} ({d}%)"},legend:{bottom:0},series:[{type:"pie",radius:gt==="doughnut"?["42%","68%"]:"72%",data:gb.labels.map((l,i)=>({name:l,value:gb.series[0][i]})),color:palette}]}; }
+  if(gt==="radar"){ const allMax=Math.max(...s.rows.map(r=>Math.max(...valueIds.map(f=>num(r[f])))),1); return {tooltip:{},legend:{bottom:0},radar:{indicator:valueIds.map(fid=>({name:fieldName(s,fid),max:allMax}))},series:[{type:"radar",data:[{value:valueIds.map(fid=>fieldAgg(s,fid,"sum")),areaStyle:{}}],color:palette}]}; }
+  if(gt==="funnel"){ const gb=groupByField(s,c.xFieldId,valueIds.slice(0,1)); const data=gb.labels.map((l,i)=>({name:l,value:gb.series[0][i]})).sort((a,b)=>b.value-a.value); return {tooltip:{trigger:"item",formatter:"{b}: {c}"},series:[{type:"funnel",left:"15%",width:"70%",data,color:palette}]}; }
   const gb=groupByField(s,c.xFieldId,valueIds);
-  const series=valueIds.map((fid,i)=>{
-    const base={name:fieldName(s,fid),type:(gt==="bar"||gt==="barH")?"bar":"line",data:gb.series[i],itemStyle:{color:palette[i%palette.length]}};
-    if(gt==="area"){ base.areaStyle={opacity:.25}; base.itemStyle={color:palette[i%palette.length]}; }
-    if(gt==="line"||gt==="area"){ base.lineStyle={color:palette[i%palette.length]}; }
-    return base;
-  });
-  return {tooltip:{trigger:"axis"},legend:{},grid:{left:50,right:20,top:30,bottom:40},
-    xAxis:{type: gt==="barH"?"value":"category",data: gt==="barH"?undefined:gb.labels},
-    yAxis:{type: gt==="barH"?"category":"value",data: gt==="barH"?gb.labels:undefined},
-    series};
+  const series=valueIds.map((fid,i)=>{ const base={name:fieldName(s,fid),type:(gt==="bar"||gt==="barH")?"bar":"line",data:gb.series[i],itemStyle:{color:palette[i%palette.length]}}; if(gt==="area"){ base.areaStyle={opacity:.25}; base.itemStyle={color:palette[i%palette.length]}; } if(gt==="line"||gt==="area"){ base.lineStyle={color:palette[i%palette.length]}; } return base; });
+  return {tooltip:{trigger:"axis"},legend:{},grid:{left:50,right:20,top:30,bottom:40},xAxis:{type:gt==="barH"?"value":"category",data:gt==="barH"?undefined:gb.labels},yAxis:{type:gt==="barH"?"category":"value",data:gt==="barH"?gb.labels:undefined},series};
 }
 function drawCharts(){
   if(typeof echarts==="undefined"){ document.querySelectorAll("[data-chart]").forEach(el=>{ el.outerHTML='<div class="chart-fallback">图表库未加载（需联网），请连接网络后刷新。</div>'; }); return; }
-  document.querySelectorAll("[data-chart]").forEach(el=>{
-    const w=state.widgets.find(x=>x.id===el.dataset.chart); if(!w) return;
-    const s=getSource(w.sourceId); if(!s) return;
-    const opt=buildChartOption(w,s);
-    const inst=echarts.init(el); _charts.push(inst); inst.setOption(opt);
-  });
-  document.querySelectorAll("[data-chart-gauge]").forEach(el=>{
-    const w=state.widgets.find(x=>x.id===el.dataset.chartGauge); if(!w) return;
-    const s=getSource(w.sourceId); if(!s) return;
-    const c=w.config;
-    let val = c.kind==="ratio" ? ratioTotal(s,{numId:c.numId,denId:c.denId})*100 : fieldAgg(s,c.fieldId,c.aggregate);
-    const max=c.max||100;
-    const inst=echarts.init(el); _charts.push(inst);
-    inst.setOption({series:[{type:"gauge",progress:{show:true,width:14},axisLine:{lineStyle:{width:14}},min:0,max:max,
-      data:[{value:val,name:c.label||""}],detail:{valueAnimation:true,formatter:"{value}"+esc(c.suffix||"")}}]});
-  });
+  document.querySelectorAll("[data-chart]").forEach(el=>{ const w=currentDash().widgets.find(x=>x.id===el.dataset.chart); if(!w) return; const s=getSource(w.sourceId); if(!s) return; const inst=echarts.init(el); _charts.push(inst); inst.setOption(buildChartOption(w,s)); });
+  document.querySelectorAll("[data-chart-gauge]").forEach(el=>{ const w=currentDash().widgets.find(x=>x.id===el.dataset.chartGauge); if(!w) return; const s=getSource(w.sourceId); if(!s) return; const c=w.config; let val=c.kind==="ratio"?ratioTotal(s,{numId:c.numId,denId:c.denId})*100:fieldAgg(s,c.fieldId,c.aggregate); const max=c.max||100; const inst=echarts.init(el); _charts.push(inst); inst.setOption({series:[{type:"gauge",progress:{show:true,width:14},axisLine:{lineStyle:{width:14}},min:0,max:max,data:[{value:val,name:c.label||""}],detail:{valueAnimation:true,formatter:"{value}"+esc(c.suffix||"")}}]}); });
 }
 
-/* ================= 模块管理 ================= */
-function moveWidget(id,dir){
-  const i=state.widgets.findIndex(w=>w.id===id), j=i+dir;
-  if(i<0||j<0||j>=state.widgets.length) return;
-  const t=state.widgets[i]; state.widgets[i]=state.widgets[j]; state.widgets[j]=t;
-  saveState(); render();
-}
-function delWidget(id){ state.widgets=state.widgets.filter(w=>w.id!==id); saveState(); render(); toast("模块已删除"); }
-function addWidgetMenu(){
-  const names=Object.keys(TYPE_LABEL);
-  document.getElementById("typeList").innerHTML = names.map(t=>`<div class="cfg-item" style="cursor:pointer;text-align:center;margin:0" onclick="addWidget('${t}')">${esc(TYPE_LABEL[t])}</div>`).join("");
-  showModal("typeModal");
-}
-function addWidget(type){
-  closeModal("typeModal");
-  const sid = state.sources.length?state.sources[0].id:"";
-  const w={id:uid("w"),name:TYPE_LABEL[type],type,span:type==="kpi"||type==="table"?12:6,sourceId:sid,config:defaultCfg(type)};
-  state.widgets.push(w); saveState(); render();
-  editWidget(w.id);
-}
-function defaultCfg(type){
-  switch(type){
-    case "kpi": return {items:[]};
-    case "cards": return {groupFieldId:"",tagFieldId:"",numFieldIds:[],ratioFieldIds:[]};
-    case "rank": return {fieldId:"",order:"desc",topN:5,groupFieldId:""};
-    case "table": return {columnIds:[]};
-    case "stat": return {label:"",fieldId:"",aggregate:"sum",suffix:"",color:"blue",isPct:false};
-    case "text": return {text:"在这里输入你的文本内容，支持使用 &lt;h1&gt;、&lt;b&gt; 等 HTML 标签。"};
-    case "chart": return {chartType:"bar",xFieldId:"",valueFieldIds:[],aggregate:"sum"};
-    case "gauge": return {label:"",kind:"field",fieldId:"",aggregate:"sum",max:100,suffix:"",color:"teal"};
-  }
-  return {};
-}
+/* ================= 组件管理（作用于当前看板） ================= */
+function moveWidget(id,dir){ const ws=currentDash().widgets, i=ws.findIndex(w=>w.id===id), j=i+dir; if(i<0||j<0||j>=ws.length) return; const t=ws[i]; ws[i]=ws[j]; ws[j]=t; saveState(); render(); }
+function delWidget(id){ currentDash().widgets=currentDash().widgets.filter(w=>w.id!==id); saveState(); render(); toast("组件已删除"); }
+function addWidgetMenu(){ const names=Object.keys(TYPE_LABEL); document.getElementById("typeList").innerHTML=names.map(t=>`<div class="cfg-item" style="cursor:pointer;text-align:center;margin:0" onclick="addWidget('${t}')">${esc(TYPE_LABEL[t])}</div>`).join(""); showModal("typeModal"); }
+function addWidget(type){ closeModal("typeModal"); const sid=state.sources.length?state.sources[0].id:""; const w={id:uid("w"),name:TYPE_LABEL[type],type,span:type==="kpi"||type==="table"?12:6,sourceId:sid,config:defaultCfg(type)}; currentDash().widgets.push(w); saveState(); render(); editWidget(w.id); }
+function defaultCfg(type){ switch(type){ case "kpi": return {items:[]}; case "cards": return {groupFieldId:"",tagFieldId:"",numFieldIds:[],ratioFieldIds:[]}; case "rank": return {fieldId:"",order:"desc",topN:5,groupFieldId:""}; case "table": return {columnIds:[]}; case "stat": return {label:"",fieldId:"",aggregate:"sum",suffix:"",color:"blue",isPct:false}; case "text": return {text:"在这里输入你的文本内容，支持使用 &lt;h1&gt;、&lt;b&gt; 等 HTML 标签。"}; case "chart": return {chartType:"bar",xFieldId:"",valueFieldIds:[],aggregate:"sum"}; case "gauge": return {label:"",kind:"field",fieldId:"",aggregate:"sum",max:100,suffix:"",color:"teal"}; } return {}; }
 
-/* 模块配置表单 */
+/* 组件配置表单 */
 let wDraft=null;
-function editWidget(id){
-  wDraft = JSON.parse(JSON.stringify(state.widgets.find(w=>w.id===id)));
-  showModal("widgetCfgModal"); renderCfg();
-}
+function editWidget(id){ wDraft=JSON.parse(JSON.stringify(currentDash().widgets.find(w=>w.id===id))); showModal("widgetCfgModal"); renderCfg(); }
 function renderCfg(){
   document.getElementById("cfgName").value=wDraft.name;
   document.getElementById("cfgName").oninput=e=>wDraft.name=e.target.value;
   document.getElementById("cfgSpan").value=String(wDraft.span||12);
   document.getElementById("cfgSpan").onchange=e=>wDraft.span=parseInt(e.target.value);
-  const s=getSource(wDraft.sourceId);
-  const fields = s? s.fields:[];
-  const fOpt = fid=>fields.map(f=>`<option value="${f.id}" ${fid===f.id?"selected":""}>${esc(f.name)}</option>`).join("");
+  const s=getSource(wDraft.sourceId); const fields=s?s.fields:[];
+  const fOpt=fid=>fields.map(f=>`<option value="${f.id}" ${fid===f.id?"selected":""}>${esc(f.name)}</option>`).join("");
   const srcSel=`<div class="f-label">数据源</div><div class="cfg-row"><select id="cfgSource">${state.sources.map(x=>`<option value="${x.id}" ${x.id===wDraft.sourceId?"selected":""}>${esc(x.name)}</option>`).join("")}</select></div>`;
   let body="";
   if(wDraft.type==="kpi"){
-    body=srcSel+`<div class="f-label">指标项</div><div id="kpiItems">${wDraft.config.items.map((it,i)=>`
-      <div class="cfg-item"><div class="cfg-head">指标 ${i+1}<span class="c-del" onclick="delKpiItem(${i})">删除</span></div>
-        <div class="cfg-row"><input data-i="${i}" data-k="name" value="${esc(it.name)}" placeholder="指标名称" style="width:130px">
-          <select data-i="${i}" data-k="kind"><option value="field" ${it.kind==="field"?"selected":""}>字段聚合</option><option value="ratio" ${it.kind==="ratio"?"selected":""}>比率相除</option></select></div>
-        <div class="cfg-row kind-field ${it.kind==="field"?"":"hidden"}"><label>绑定字段</label><select data-i="${i}" data-k="fieldId"><option value="">--</option>${fOpt(it.fieldId)}</select><label>聚合</label><select data-i="${i}" data-k="aggregate">${AGGS.map(a=>`<option ${it.aggregate===a?"selected":""}>${a}</option>`).join("")}</select></div>
-        <div class="cfg-row kind-ratio ${it.kind==="ratio"?"":"hidden"}"><label>分子</label><select data-i="${i}" data-k="numId"><option value="">--</option>${fOpt(it.numId)}</select><label>分母</label><select data-i="${i}" data-k="denId"><option value="">--</option>${fOpt(it.denId)}</select></div>
-        <div class="cfg-row"><label>颜色</label><select data-i="${i}" data-k="color">${COLORS.map(c=>`<option value="${c}" ${it.color===c?"selected":""}>${c}</option>`).join("")}</select><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" data-i="${i}" data-k="isPct" ${it.isPct?"checked":""}>百分比</label></div>
-        <div class="cfg-row"><label>说明</label><input data-i="${i}" data-k="note" value="${esc(it.note)}" style="flex:1"></div>
-      </div>`).join("")}</div><button class="btn sm" onclick="addKpiItem()">+ 新增指标</button>`;
+    body=srcSel+`<div class="f-label">指标项</div><div id="kpiItems">${wDraft.config.items.map((it,i)=>`<div class="cfg-item"><div class="cfg-head">指标 ${i+1}<span class="c-del" onclick="delKpiItem(${i})">删除</span></div><div class="cfg-row"><input data-i="${i}" data-k="name" value="${esc(it.name)}" placeholder="指标名称" style="width:130px"><select data-i="${i}" data-k="kind"><option value="field" ${it.kind==="field"?"selected":""}>字段聚合</option><option value="ratio" ${it.kind==="ratio"?"selected":""}>比率相除</option></select></div><div class="cfg-row kind-field ${it.kind==="field"?"":"hidden"}"><label>绑定字段</label><select data-i="${i}" data-k="fieldId"><option value="">--</option>${fOpt(it.fieldId)}</select><label>聚合</label><select data-i="${i}" data-k="aggregate">${AGGS.map(a=>`<option ${it.aggregate===a?"selected":""}>${a}</option>`).join("")}</select></div><div class="cfg-row kind-ratio ${it.kind==="ratio"?"":"hidden"}"><label>分子</label><select data-i="${i}" data-k="numId"><option value="">--</option>${fOpt(it.numId)}</select><label>分母</label><select data-i="${i}" data-k="denId"><option value="">--</option>${fOpt(it.denId)}</select></div><div class="cfg-row"><label>颜色</label><select data-i="${i}" data-k="color">${COLORS.map(c=>`<option value="${c}" ${it.color===c?"selected":""}>${c}</option>`).join("")}</select><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" data-i="${i}" data-k="isPct" ${it.isPct?"checked":""}>百分比</label></div><div class="cfg-row"><label>说明</label><input data-i="${i}" data-k="note" value="${esc(it.note)}" style="flex:1"></div></div>`).join("")}</div><button class="btn sm" onclick="addKpiItem()">+ 新增指标</button>`;
   }
-  else if(wDraft.type==="stat"){
-    const c=wDraft.config;
-    body=srcSel+`<div class="f-label">配置</div>
-      <div class="cfg-row"><label>标签</label><input id="stLabel" value="${esc(c.label||"")}" style="width:180px"></div>
-      <div class="cfg-row"><label>数值字段</label><select id="stField"><option value="">--</option>${fOpt(c.fieldId)}</select><label>聚合</label><select id="stAgg">${AGGS.map(a=>`<option ${c.aggregate===a?"selected":""}>${a}</option>`).join("")}</select></div>
-      <div class="cfg-row"><label>后缀</label><input id="stSuffix" value="${esc(c.suffix||"")}" style="width:80px"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="stPct" ${c.isPct?"checked":""}>百分比</label><label>颜色</label><select id="stColor">${COLORS.map(x=>`<option value="${x}" ${c.color===x?"selected":""}>${x}</option>`).join("")}</select></div>`;
-  }
-  else if(wDraft.type==="gauge"){
-    const c=wDraft.config;
-    body=srcSel+`<div class="f-label">配置</div>
-      <div class="cfg-row"><label>标签</label><input id="gaLabel" value="${esc(c.label||"")}" style="width:180px"></div>
-      <div class="cfg-row"><label>取值方式</label><select id="gaKind"><option value="field" ${c.kind==="field"?"selected":""}>字段聚合</option><option value="ratio" ${c.kind==="ratio"?"selected":""}>比率(分子/分母)</option></select></div>
-      <div class="cfg-row kind-field ${c.kind==="field"?"":"hidden"}"><label>字段</label><select id="gaField"><option value="">--</option>${fOpt(c.fieldId)}</select><label>聚合</label><select id="gaAgg">${AGGS.map(a=>`<option ${c.aggregate===a?"selected":""}>${a}</option>`).join("")}</select></div>
-      <div class="cfg-row kind-ratio ${c.kind==="ratio"?"":"hidden"}"><label>分子</label><select id="gaNum"><option value="">--</option>${fOpt(c.numId)}</select><label>分母</label><select id="gaDen"><option value="">--</option>${fOpt(c.denId)}</select></div>
-      <div class="cfg-row"><label>量程上限</label><input id="gaMax" type="number" value="${c.max||100}" style="width:90px"><label>后缀</label><input id="gaSuffix" value="${esc(c.suffix||"")}" style="width:80px"><label>颜色</label><select id="gaColor">${COLORS.map(x=>`<option value="${x}" ${c.color===x?"selected":""}>${x}</option>`).join("")}</select></div>`;
-  }
-  else if(wDraft.type==="chart"){
-    const c=wDraft.config;
-    body=srcSel+`<div class="f-label">配置</div>
-      <div class="cfg-row"><label>图表类型</label><select id="chType">${CHART_TYPES.map(t=>`<option value="${t}" ${c.chartType===t?"selected":""}>${esc(t)}</option>`).join("")}</select></div>
-      <div class="cfg-row ch-x ${(c.chartType==="radar")?"hidden":""}"><label>X/分类字段</label><select id="chX"><option value="">--</option>${fOpt(c.xFieldId)}</select></div>
-      <div class="f-label ch-x ${(c.chartType==="radar")?"hidden":""}">数值字段（可多个）</div>
-      <div class="ch-x ${(c.chartType==="radar")?"hidden":""}">${(c.valueFieldIds||[]).map((fid,i)=>`<div class="cfg-row"><select data-chv="${i}"><option value="">--</option>${fOpt(fid)}</select><span class="fd" onclick="delChartVal(${i})">删除</span></div>`).join("")}</div>
-      <button class="btn sm ch-x ${(c.chartType==="radar")?"hidden":""}" onclick="addChartVal()">+ 数值字段</button>
-      <div class="cfg-row ch-radar ${c.chartType==="radar"?"":"hidden"}"><label>指标字段(雷达)</label><select id="chRadarField"><option value="">--</option>${fOpt(c.valueFieldIds?c.valueFieldIds[0]:"")}</select><button class="btn sm" onclick="addRadarVal()">+ 添加指标</button></div>
-      <div id="chRadarList" class="ch-radar ${c.chartType==="radar"?"":"hidden"}">${(c.valueFieldIds||[]).map((fid,i)=>`<div class="cfg-row"><select data-rv="${i}"><option value="">--</option>${fOpt(fid)}</select><span class="fd" onclick="delRadarVal(${i})">删除</span></div>`).join("")}</div>`;
-  }
-  else if(wDraft.type==="cards"){
-    body=srcSel+`<div class="f-label">卡片结构</div>
-      <div class="cfg-row"><label>标题字段</label><select id="cGroup"><option value="">--</option>${fOpt(wDraft.config.groupFieldId)}</select><label>标签字段</label><select id="cTag"><option value="">--</option>${fOpt(wDraft.config.tagFieldId)}</select></div>
-      <div class="f-label">数值字段</div><div id="cNums">${(wDraft.config.numFieldIds||[]).map((fid,i)=>`<div class="cfg-row"><select data-num="${i}"><option value="">--</option>${fOpt(fid)}</select><span class="fd" onclick="delNumField(${i})">删除</span></div>`).join("")}</div><button class="btn sm" onclick="addNumField()">+ 数值字段</button>
-      <div class="f-label">比率进度条（分子/分母）</div><div id="cRatios">${(wDraft.config.ratioFieldIds||[]).map((x,i)=>`<div class="cfg-row"><select data-rnum="${i}"><option value="">--分子--</option>${fOpt(x.numId)}</select><span>/</span><select data-rden="${i}"><option value="">--分母--</option>${fOpt(x.denId)}</select><span class="fd" onclick="delRatio(${i})">删除</span></div>`).join("")}</div><button class="btn sm" onclick="addRatio()">+ 比率进度条</button>`;
-  }
-  else if(wDraft.type==="rank"){
-    body=srcSel+`<div class="cfg-row"><label>排序字段</label><select id="rField"><option value="">--</option>${fOpt(wDraft.config.fieldId)}</select><label>排序</label><select id="rOrder"><option value="desc" ${wDraft.config.order==="desc"?"selected":""}>降序</option><option value="asc" ${wDraft.config.order==="asc"?"selected":""}>升序</option></select><label>条数</label><input id="rTop" type="number" value="${wDraft.config.topN}" style="width:70px"></div>
-      <div class="cfg-row"><label>显示名称字段</label><select id="rGroup"><option value="">--</option>${fOpt(wDraft.config.groupFieldId||"")}</select></div>`;
-  }
-  else if(wDraft.type==="table"){
-    body=srcSel+`<div class="f-label">展示字段列</div><div id="tCols">${(wDraft.config.columnIds||[]).map((fid,i)=>`<div class="cfg-row"><select data-col="${i}"><option value="">--</option>${fOpt(fid)}</select><span class="fd" onclick="delCol(${i})">删除</span></div>`).join("")}</div><button class="btn sm" onclick="addCol()">+ 字段列</button>`;
-  }
-  else if(wDraft.type==="text"){
-    body=`<div class="f-label">文本内容（支持 HTML 标签）</div><textarea id="txText" rows="4" style="width:100%">${esc(wDraft.config.text||"")}</textarea>`;
-  }
-  document.getElementById("cfgBody").innerHTML=body;
-  bindCfgEvents();
+  else if(wDraft.type==="stat"){ const c=wDraft.config; body=srcSel+`<div class="f-label">配置</div><div class="cfg-row"><label>标签</label><input id="stLabel" value="${esc(c.label||"")}" style="width:180px"></div><div class="cfg-row"><label>数值字段</label><select id="stField"><option value="">--</option>${fOpt(c.fieldId)}</select><label>聚合</label><select id="stAgg">${AGGS.map(a=>`<option ${c.aggregate===a?"selected":""}>${a}</option>`).join("")}</select></div><div class="cfg-row"><label>后缀</label><input id="stSuffix" value="${esc(c.suffix||"")}" style="width:80px"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="stPct" ${c.isPct?"checked":""}>百分比</label><label>颜色</label><select id="stColor">${COLORS.map(x=>`<option value="${x}" ${c.color===x?"selected":""}>${x}</option>`).join("")}</select></div>`; }
+  else if(wDraft.type==="gauge"){ const c=wDraft.config; body=srcSel+`<div class="f-label">配置</div><div class="cfg-row"><label>标签</label><input id="gaLabel" value="${esc(c.label||"")}" style="width:180px"></div><div class="cfg-row"><label>取值方式</label><select id="gaKind"><option value="field" ${c.kind==="field"?"selected":""}>字段聚合</option><option value="ratio" ${c.kind==="ratio"?"selected":""}>比率(分子/分母)</option></select></div><div class="cfg-row kind-field ${c.kind==="field"?"":"hidden"}"><label>字段</label><select id="gaField"><option value="">--</option>${fOpt(c.fieldId)}</select><label>聚合</label><select id="gaAgg">${AGGS.map(a=>`<option ${c.aggregate===a?"selected":""}>${a}</option>`).join("")}</select></div><div class="cfg-row kind-ratio ${c.kind==="ratio"?"":"hidden"}"><label>分子</label><select id="gaNum"><option value="">--</option>${fOpt(c.numId)}</select><label>分母</label><select id="gaDen"><option value="">--</option>${fOpt(c.denId)}</select></div><div class="cfg-row"><label>量程上限</label><input id="gaMax" type="number" value="${c.max||100}" style="width:90px"><label>后缀</label><input id="gaSuffix" value="${esc(c.suffix||"")}" style="width:80px"><label>颜色</label><select id="gaColor">${COLORS.map(x=>`<option value="${x}" ${c.color===x?"selected":""}>${x}</option>`).join("")}</select></div>`; }
+  else if(wDraft.type==="chart"){ const c=wDraft.config; body=srcSel+`<div class="f-label">配置</div><div class="cfg-row"><label>图表类型</label><select id="chType">${CHART_TYPES.map(t=>`<option value="${t}" ${c.chartType===t?"selected":""}>${esc(t)}</option>`).join("")}</select></div><div class="cfg-row ch-x ${c.chartType==="radar"?"hidden":""}"><label>X/分类字段</label><select id="chX"><option value="">--</option>${fOpt(c.xFieldId)}</select></div><div class="f-label ch-x ${c.chartType==="radar"?"hidden":""}">数值字段（可多个）</div><div class="ch-x ${c.chartType==="radar"?"hidden":""}">${(c.valueFieldIds||[]).map((fid,i)=>`<div class="cfg-row"><select data-chv="${i}"><option value="">--</option>${fOpt(fid)}</select><span class="fd" onclick="delChartVal(${i})">删除</span></div>`).join("")}</div><button class="btn sm ch-x ${c.chartType==="radar"?"hidden":""}" onclick="addChartVal()">+ 数值字段</button><div class="cfg-row ch-radar ${c.chartType==="radar"?"":"hidden"}"><label>指标字段(雷达)</label><select id="chRadarField"><option value="">--</option>${fOpt(c.valueFieldIds?c.valueFieldIds[0]:"")}</select><button class="btn sm" onclick="addRadarVal()">+ 添加指标</button></div><div id="chRadarList" class="ch-radar ${c.chartType==="radar"?"":"hidden"}">${(c.valueFieldIds||[]).map((fid,i)=>`<div class="cfg-row"><select data-rv="${i}"><option value="">--</option>${fOpt(fid)}</select><span class="fd" onclick="delRadarVal(${i})">删除</span></div>`).join("")}</div>`; }
+  else if(wDraft.type==="cards"){ body=srcSel+`<div class="f-label">卡片结构</div><div class="cfg-row"><label>标题字段</label><select id="cGroup"><option value="">--</option>${fOpt(wDraft.config.groupFieldId)}</select><label>标签字段</label><select id="cTag"><option value="">--</option>${fOpt(wDraft.config.tagFieldId)}</select></div><div class="f-label">数值字段</div><div id="cNums">${(wDraft.config.numFieldIds||[]).map((fid,i)=>`<div class="cfg-row"><select data-num="${i}"><option value="">--</option>${fOpt(fid)}</select><span class="fd" onclick="delNumField(${i})">删除</span></div>`).join("")}</div><button class="btn sm" onclick="addNumField()">+ 数值字段</button><div class="f-label">比率进度条（分子/分母）</div><div id="cRatios">${(wDraft.config.ratioFieldIds||[]).map((x,i)=>`<div class="cfg-row"><select data-rnum="${i}"><option value="">--分子--</option>${fOpt(x.numId)}</select><span>/</span><select data-rden="${i}"><option value="">--分母--</option>${fOpt(x.denId)}</select><span class="fd" onclick="delRatio(${i})">删除</span></div>`).join("")}</div><button class="btn sm" onclick="addRatio()">+ 比率进度条</button>`; }
+  else if(wDraft.type==="rank"){ body=srcSel+`<div class="cfg-row"><label>排序字段</label><select id="rField"><option value="">--</option>${fOpt(wDraft.config.fieldId)}</select><label>排序</label><select id="rOrder"><option value="desc" ${wDraft.config.order==="desc"?"selected":""}>降序</option><option value="asc" ${wDraft.config.order==="asc"?"selected":""}>升序</option></select><label>条数</label><input id="rTop" type="number" value="${wDraft.config.topN}" style="width:70px"></div><div class="cfg-row"><label>显示名称字段</label><select id="rGroup"><option value="">--</option>${fOpt(wDraft.config.groupFieldId||"")}</select></div>`; }
+  else if(wDraft.type==="table"){ body=srcSel+`<div class="f-label">展示字段列</div><div id="tCols">${(wDraft.config.columnIds||[]).map((fid,i)=>`<div class="cfg-row"><select data-col="${i}"><option value="">--</option>${fOpt(fid)}</select><span class="fd" onclick="delCol(${i})">删除</span></div>`).join("")}</div><button class="btn sm" onclick="addCol()">+ 字段列</button>`; }
+  else if(wDraft.type==="text"){ body=`<div class="f-label">文本内容（支持 HTML 标签）</div><textarea id="txText" rows="4" style="width:100%">${esc(wDraft.config.text||"")}</textarea>`; }
+  document.getElementById("cfgBody").innerHTML=body; bindCfgEvents();
 }
 function bindCfgEvents(){
-  const srcSel=document.getElementById("cfgSource");
-  if(srcSel) srcSel.addEventListener("change",()=>{ wDraft.sourceId=srcSel.value; renderCfg(); });
-  /* KPI */
-  document.querySelectorAll("#kpiItems [data-k]").forEach(el=>{
-    const i=+el.dataset.i,k=el.dataset.k;
-    el.addEventListener("change",()=>{
-      const it=wDraft.config.items[i];
-      it[k]= el.type==="checkbox"? el.checked : el.value;
-      if(k==="kind"){ const item=el.closest(".cfg-item"); item.querySelector(".kind-field").classList.toggle("hidden",it.kind!=="field"); item.querySelector(".kind-ratio").classList.toggle("hidden",it.kind!=="ratio"); }
-    });
-  });
-  /* stat */
+  const srcSel=document.getElementById("cfgSource"); if(srcSel) srcSel.addEventListener("change",()=>{ wDraft.sourceId=srcSel.value; renderCfg(); });
+  document.querySelectorAll("#kpiItems [data-k]").forEach(el=>{ const i=+el.dataset.i,k=el.dataset.k; el.addEventListener("change",()=>{ const it=wDraft.config.items[i]; it[k]=el.type==="checkbox"?el.checked:el.value; if(k==="kind"){ const item=el.closest(".cfg-item"); item.querySelector(".kind-field").classList.toggle("hidden",it.kind!=="field"); item.querySelector(".kind-ratio").classList.toggle("hidden",it.kind!=="ratio"); } }); });
   const stL=document.getElementById("stLabel"); if(stL) stL.oninput=e=>wDraft.config.label=e.target.value;
   const stF=document.getElementById("stField"); if(stF) stF.onchange=e=>wDraft.config.fieldId=e.target.value;
   const stA=document.getElementById("stAgg"); if(stA) stA.onchange=e=>wDraft.config.aggregate=e.target.value;
   const stS=document.getElementById("stSuffix"); if(stS) stS.oninput=e=>wDraft.config.suffix=e.target.value;
   const stP=document.getElementById("stPct"); if(stP) stP.onchange=e=>wDraft.config.isPct=e.target.checked;
   const stC=document.getElementById("stColor"); if(stC) stC.onchange=e=>wDraft.config.color=e.target.value;
-  /* gauge */
   const gaK=document.getElementById("gaKind"); if(gaK) gaK.onchange=e=>{ wDraft.config.kind=e.target.value; const b=document.querySelector("#cfgBody"); b.querySelector(".kind-field").classList.toggle("hidden",e.target.value!=="field"); b.querySelector(".kind-ratio").classList.toggle("hidden",e.target.value!=="ratio"); };
   const gaL=document.getElementById("gaLabel"); if(gaL) gaL.oninput=e=>wDraft.config.label=e.target.value;
   const gaF=document.getElementById("gaField"); if(gaF) gaF.onchange=e=>wDraft.config.fieldId=e.target.value;
@@ -612,24 +485,19 @@ function bindCfgEvents(){
   const gaM=document.getElementById("gaMax"); if(gaM) gaM.oninput=e=>wDraft.config.max=parseFloat(e.target.value)||100;
   const gaS=document.getElementById("gaSuffix"); if(gaS) gaS.oninput=e=>wDraft.config.suffix=e.target.value;
   const gaC=document.getElementById("gaColor"); if(gaC) gaC.onchange=e=>wDraft.config.color=e.target.value;
-  /* chart */
   const chT=document.getElementById("chType"); if(chT) chT.onchange=e=>{ wDraft.config.chartType=e.target.value; renderCfg(); };
   const chX=document.getElementById("chX"); if(chX) chX.onchange=e=>wDraft.config.xFieldId=e.target.value;
   document.querySelectorAll("#chRadarList [data-rv]").forEach(el=>el.onchange=e=>wDraft.config.valueFieldIds[+el.dataset.rv]=e.target.value);
   const chRF=document.getElementById("chRadarField"); if(chRF) chRF.onchange=e=>{ wDraft.config.valueFieldIds=[e.target.value]; renderCfg(); };
-  /* cards */
   document.querySelectorAll("#cNums select").forEach(el=>el.onchange=e=>{ wDraft.config.numFieldIds[+el.dataset.num]=e.target.value; });
   document.querySelectorAll("#cRatios select").forEach(el=>el.onchange=e=>{ const i=el.dataset.rnum!==undefined?+el.dataset.rnum:+el.dataset.rden; const k=el.dataset.rnum!==undefined?"numId":"denId"; wDraft.config.ratioFieldIds[i][k]=e.target.value; });
   const cg=document.getElementById("cGroup"); if(cg) cg.onchange=e=>wDraft.config.groupFieldId=e.target.value;
   const ct=document.getElementById("cTag"); if(ct) ct.onchange=e=>wDraft.config.tagFieldId=e.target.value;
-  /* rank */
   const rf=document.getElementById("rField"); if(rf) rf.onchange=e=>wDraft.config.fieldId=e.target.value;
   const ro=document.getElementById("rOrder"); if(ro) ro.onchange=e=>wDraft.config.order=e.target.value;
   const rtop=document.getElementById("rTop"); if(rtop) rtop.oninput=e=>wDraft.config.topN=Math.max(1,parseInt(e.target.value)||5);
   const rgp=document.getElementById("rGroup"); if(rgp) rgp.onchange=e=>wDraft.config.groupFieldId=e.target.value;
-  /* table */
   document.querySelectorAll("#tCols select").forEach(el=>el.onchange=e=>wDraft.config.columnIds[+el.dataset.col]=e.target.value);
-  /* text */
   const txt=document.getElementById("txText"); if(txt) txt.oninput=e=>wDraft.config.text=e.target.value;
 }
 function addKpiItem(){ wDraft.config.items.push({name:"新指标",kind:"field",fieldId:"",aggregate:"sum",isPct:false,note:"",color:"gray"}); renderCfg(); }
@@ -644,49 +512,26 @@ function addChartVal(){ wDraft.config.valueFieldIds.push(""); renderCfg(); }
 function delChartVal(i){ wDraft.config.valueFieldIds.splice(i,1); renderCfg(); }
 function addRadarVal(){ wDraft.config.valueFieldIds.push(""); renderCfg(); }
 function delRadarVal(i){ wDraft.config.valueFieldIds.splice(i,1); renderCfg(); }
-function saveWidget(){
-  const idx=state.widgets.findIndex(w=>w.id===wDraft.id);
-  if(idx>=0) state.widgets[idx]=wDraft;
-  saveState(); closeModal("widgetCfgModal"); render(); toast("模块配置已保存");
-}
+function saveWidget(){ const ws=currentDash().widgets, idx=ws.findIndex(w=>w.id===wDraft.id); if(idx>=0) ws[idx]=wDraft; saveState(); closeModal("widgetCfgModal"); render(); toast("组件配置已保存"); }
 
-/* 模块管理列表 */
-function openWidgets(){
-  showModal("widgetModal");
-  document.getElementById("widgetList").innerHTML = state.widgets.map(w=>`
-    <div class="cfg-item"><div class="cfg-head"><span>${esc(w.name)} <span style="color:var(--sub);font-weight:400">(${TYPE_LABEL[w.type]||w.type})</span></span>
-      <span style="display:flex;gap:8px"><span class="c-del" onclick="moveWidget('${w.id}',-1)">上移</span><span class="c-del" onclick="moveWidget('${w.id}',1)">下移</span><span class="c-del" onclick="editWidget('${w.id}')">配置</span><span class="c-del" onclick="delWidget('${w.id}')">删除</span></span></div>
-      <div style="font-size:12px;color:var(--sub)">数据源：${esc(getSource(w.sourceId)?getSource(w.sourceId).name:"(未绑定)")} · 宽度：${w.span||12}/12</div></div>`).join("")
-    || '<div class="empty">暂无模块。</div>';
-}
+/* 组件管理列表 */
+function openWidgets(){ showModal("widgetModal"); const dash=currentDash(); document.getElementById("widgetList").innerHTML=dash.widgets.map(w=>`<div class="cfg-item"><div class="cfg-head"><span>${esc(w.name)} <span style="color:var(--sub);font-weight:400">(${TYPE_LABEL[w.type]||w.type})</span></span><span style="display:flex;gap:8px"><span class="c-del" onclick="moveWidget('${w.id}',-1)">上移</span><span class="c-del" onclick="moveWidget('${w.id}',1)">下移</span><span class="c-del" onclick="editWidget('${w.id}')">配置</span><span class="c-del" onclick="delWidget('${w.id}')">删除</span></span></div><div style="font-size:12px;color:var(--sub)">数据源：${esc(getSource(w.sourceId)?getSource(w.sourceId).name:"(未绑定)")} · 宽度：${w.span||12}/12</div></div>`).join("")||'<div class="empty">当前看板暂无组件。</div>'; }
 
-/* ================= 数据源管理 ================= */
+/* ================= 数据源管理（全局） ================= */
 let srcDraft=null, curSrcId=null;
-function openSources(){
-  srcDraft = JSON.parse(JSON.stringify(state.sources));
-  curSrcId = srcDraft.length?srcDraft[0].id:null;
-  renderSrcList(); renderSrcEditor(); showModal("srcModal");
-}
-function renderSrcList(){
-  document.getElementById("srcList").innerHTML = srcDraft.map(s=>`
-    <div class="sl-item ${s.id===curSrcId?"active":""}" onclick="selectSrc('${s.id}')"><span>${esc(s.name)}</span><span class="d" onclick="event.stopPropagation();delSource('${s.id}')">删除</span></div>`).join("");
-}
+function openSources(){ srcDraft=JSON.parse(JSON.stringify(state.sources)); curSrcId=srcDraft.length?srcDraft[0].id:null; renderSrcList(); renderSrcEditor(); showModal("srcModal"); }
+function renderSrcList(){ document.getElementById("srcList").innerHTML=srcDraft.map(s=>`<div class="sl-item ${s.id===curSrcId?"active":""}" onclick="selectSrc('${s.id}')"><span>${esc(s.name)}</span><span class="d" onclick="event.stopPropagation();delSource('${s.id}')">删除</span></div>`).join(""); }
 function selectSrc(id){ curSrcId=id; renderSrcList(); renderSrcEditor(); }
 function addSource(){ const s={id:uid("s"),name:"数据源"+(srcDraft.length+1),fields:[],rows:[]}; srcDraft.push(s); curSrcId=s.id; renderSrcList(); renderSrcEditor(); }
 function delSource(id){ srcDraft=srcDraft.filter(s=>s.id!==id); curSrcId=srcDraft.length?srcDraft[0].id:null; renderSrcList(); renderSrcEditor(); }
 function curSrc(){ return srcDraft.find(s=>s.id===curSrcId); }
 function renderSrcEditor(){
-  const box=document.getElementById("srcEditor");
-  const s=curSrc();
+  const box=document.getElementById("srcEditor"), s=curSrc();
   if(!s){ box.innerHTML='<div class="empty">请选择或新建数据源。</div>'; return; }
-  const fieldsHtml = s.fields.map((f,i)=>`<div class="field-row"><input data-fi="${i}" data-k="name" value="${esc(f.name)}" placeholder="字段名" style="width:160px"><select data-fi="${i}" data-k="type"><option value="number" ${f.type==="number"?"selected":""}>数字</option><option value="text" ${f.type==="text"?"selected":""}>文本</option></select><span class="fd" onclick="delField(${i})">删除</span></div>`).join("");
+  const fieldsHtml=s.fields.map((f,i)=>`<div class="field-row"><input data-fi="${i}" data-k="name" value="${esc(f.name)}" placeholder="字段名" style="width:160px"><select data-fi="${i}" data-k="type"><option value="number" ${f.type==="number"?"selected":""}>数字</option><option value="text" ${f.type==="text"?"selected":""}>文本</option></select><span class="fd" onclick="delField(${i})">删除</span></div>`).join("");
   const cols=s.fields;
-  const tableHtml = cols.length? `<table class="data"><thead><tr>${cols.map(f=>`<th>${esc(f.name)}</th>`).join("")}<th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}">${cols.map(f=>`<td><input data-r="${ri}" data-f="${f.id}" value="${esc(r[f.id]??"")}"></td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table>` : '<div class="hint">该数据源暂无字段，请先添加字段模板。</div>';
-  box.innerHTML = `
-    <div class="f-label">数据源名称</div><div class="cfg-row"><input id="srcName" value="${esc(s.name)}" style="width:220px"></div>
-    <div class="f-label">字段模板（自定义结构，可增删/改类型）</div><div id="fieldList">${fieldsHtml}</div><button class="btn sm" onclick="addField()">+ 添加字段</button>
-    <div class="f-label">数据记录</div>${tableHtml}
-    <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn sm" onclick="addRow()">+ 新增行</button><button class="btn sm" onclick="importToSource('${s.id}')">导入 Excel/CSV</button><button class="btn sm" onclick="pasteToSource('${s.id}')">粘贴数据</button></div>`;
+  const tableHtml=cols.length?`<table class="data"><thead><tr>${cols.map(f=>`<th>${esc(f.name)}</th>`).join("")}<th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}">${cols.map(f=>`<td><input data-r="${ri}" data-f="${f.id}" value="${esc(r[f.id]??"")}"></td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table>`:'<div class="hint">该数据源暂无字段，请先添加字段模板。</div>';
+  box.innerHTML=`<div class="f-label">数据源名称</div><div class="cfg-row"><input id="srcName" value="${esc(s.name)}" style="width:220px"></div><div class="f-label">字段模板（自定义结构，可增删/改类型）</div><div id="fieldList">${fieldsHtml}</div><button class="btn sm" onclick="addField()">+ 添加字段</button><div class="f-label">数据记录</div>${tableHtml}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn sm" onclick="addRow()">+ 新增行</button><button class="btn sm" onclick="importToSource('${s.id}')">导入 Excel/CSV</button><button class="btn sm" onclick="pasteToSource('${s.id}')">粘贴数据</button></div>`;
   document.getElementById("srcName").addEventListener("input",e=>s.name=e.target.value);
   document.querySelectorAll("#fieldList [data-fi]").forEach(el=>el.addEventListener("input",()=>{ const f=s.fields[+el.dataset.fi]; f[el.dataset.k]=el.value; }));
   document.querySelectorAll("#srcEditor table.data input").forEach(el=>el.addEventListener("input",()=>{ s.rows[+el.dataset.r][el.dataset.f]=el.value; }));
@@ -696,48 +541,13 @@ function delField(i){ const s=curSrc(); const fid=s.fields[i].id; s.fields.splic
 function addRow(){ const s=curSrc(); const r={}; s.fields.forEach(f=>r[f.id]=""); s.rows.push(r); renderSrcEditor(); }
 function delRow(i){ curSrc().rows.splice(i,1); renderSrcEditor(); }
 function saveSources(){ state.sources=srcDraft; saveState(); closeModal("srcModal"); render(); toast("数据源已保存"); }
-
-/* 导入 */
-function importToSource(id){
-  const inp=document.createElement("input"); inp.type="file"; inp.accept=".xlsx,.xls,.csv,.tsv";
-  inp.onchange=()=>{
-    const file=inp.files[0]; if(!file) return;
-    const reader=new FileReader();
-    reader.onload=e=>{
-      const data=new Uint8Array(e.target.result);
-      let rows;
-      if(typeof XLSX!=="undefined"){ const wb=XLSX.read(data,{type:"array"}); const ws=wb.Sheets[wb.SheetNames[0]]; rows=XLSX.utils.sheet_to_json(ws,{defval:""}); }
-      else { toast("Excel 解析库未加载（需联网），请使用粘贴方式"); return; }
-      applyImportRows(id,rows);
-    };
-    reader.readAsArrayBuffer(file);
-  };
-  inp.click();
-}
-function applyImportRows(id,rows){
-  const s=srcDraft.find(x=>x.id===id);
-  if(!rows||!rows.length){ toast("数据为空"); return; }
-  const head=Object.keys(rows[0]); const fidMap={};
-  head.forEach(h=>{ let f=s.fields.find(x=>x.name===h); if(!f){ f={id:uid("f"),name:h,type:"number"}; s.fields.push(f); } fidMap[h]=f.id; });
-  s.rows=rows.map(o=>{ const r={}; head.forEach(h=>{ r[fidMap[h]]=o[h]; }); return r; });
-  renderSrcEditor(); toast("已导入 "+rows.length+" 行");
-}
-function pasteToSource(id){
-  const txt=prompt("粘贴 CSV/TSV 数据（首行为字段名）:");
-  if(!txt) return;
-  const delim=txt.includes("\t")?"\t":",";
-  const lines=txt.split(/\r?\n/).filter(l=>l.trim()!=="");
-  if(lines.length<2){ toast("数据不足"); return; }
-  const head=lines[0].split(delim).map(h=>h.trim());
-  const rows=lines.slice(1).map(l=>{ const c=l.split(delim); const o={}; head.forEach((h,j)=>{ let v=c[j]?.trim()??""; const n=Number(v); o[h]=(v!==""&&!isNaN(n)&&/^[-\d.]+$/.test(v))?n:v; }); return o; });
-  applyImportRows(id,rows);
-}
+function importToSource(id){ const inp=document.createElement("input"); inp.type="file"; inp.accept=".xlsx,.xls,.csv,.tsv"; inp.onchange=()=>{ const file=inp.files[0]; if(!file) return; const reader=new FileReader(); reader.onload=e=>{ const data=new Uint8Array(e.target.result); let rows; if(typeof XLSX!=="undefined"){ const wb=XLSX.read(data,{type:"array"}); const ws=wb.Sheets[wb.SheetNames[0]]; rows=XLSX.utils.sheet_to_json(ws,{defval:""}); } else { toast("Excel 解析库未加载（需联网），请使用粘贴方式"); return; } applyImportRows(id,rows); }; reader.readAsArrayBuffer(file); }; inp.click(); }
+function applyImportRows(id,rows){ const s=srcDraft.find(x=>x.id===id); if(!rows||!rows.length){ toast("数据为空"); return; } const head=Object.keys(rows[0]); const fidMap={}; head.forEach(h=>{ let f=s.fields.find(x=>x.name===h); if(!f){ f={id:uid("f"),name:h,type:"number"}; s.fields.push(f); } fidMap[h]=f.id; }); s.rows=rows.map(o=>{ const r={}; head.forEach(h=>{ r[fidMap[h]]=o[h]; }); return r; }); renderSrcEditor(); toast("已导入 "+rows.length+" 行"); }
+function pasteToSource(id){ const txt=prompt("粘贴 CSV/TSV 数据（首行为字段名）:"); if(!txt) return; const delim=txt.includes("\t")?"\t":","; const lines=txt.split(/\r?\n/).filter(l=>l.trim()!==""); if(lines.length<2){ toast("数据不足"); return; } const head=lines[0].split(delim).map(h=>h.trim()); const rows=lines.slice(1).map(l=>{ const c=l.split(delim); const o={}; head.forEach((h,j)=>{ let v=c[j]?.trim()??""; const n=Number(v); o[h]=(v!==""&&!isNaN(n)&&/^[-\d.]+$/.test(v))?n:v; }); return o; }); applyImportRows(id,rows); }
 
 /* ================= 示例 / 重置 ================= */
 function loadExample(){ state=buildExample(); saveState(); render(); toast("已载入示例"); }
 function resetAll(){ if(!confirm("确定恢复为示例并清空当前配置吗？")) return; state=buildExample(); saveState(); render(); toast("已重置"); }
-
-/* ================= 模态 ================= */
 function showModal(id){ document.getElementById(id).classList.remove("hidden"); }
 function closeModal(id){ document.getElementById(id).classList.add("hidden"); }
 
