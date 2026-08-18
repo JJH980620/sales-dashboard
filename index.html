@@ -67,6 +67,16 @@
   #srcEditor table.data thead th{position:sticky;top:0;background:#f8fafc;z-index:2;border-bottom:1px solid var(--line);}
   #srcPanel table.data .rowno input{width:16px;height:16px;cursor:pointer;vertical-align:middle;}
   .btn.danger{color:#ef4444;border-color:#f5c2c2;}
+  .ctx-menu{position:fixed;z-index:300;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 24px rgba(30,50,80,.16);padding:6px;min-width:160px;}
+  .ctx-menu .cm-item{padding:8px 12px;font-size:13px;border-radius:7px;cursor:pointer;display:flex;align-items:center;gap:8px;}
+  .ctx-menu .cm-item:hover{background:#f2f6fb;}
+  .ctx-menu .cm-item.danger{color:#ef4444;}
+  .ctx-menu .cm-item.danger:hover{background:#fdecec;}
+  .ctx-menu .cm-sep{height:1px;background:var(--line);margin:5px 8px;}
+  .ctx-menu .cm-ico{width:16px;text-align:center;color:var(--sub);}
+  /* 滚动优化：避免滚动链式触发与重排，启用触摸惯性 */
+  .main,.sidebar,#srcEditor .data-wrap{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+  #srcEditor table.data thead th{will-change:top;}
   .btn.danger:hover{background:#fdecec;}
   #srcPanel .split{display:flex;gap:16px;align-items:flex-start;min-width:0;}
   #srcEditor{min-width:0;flex:1;overflow:hidden;}
@@ -1171,6 +1181,20 @@ function srcPaste(){ const s=curSrc(); if(!srcClipboard||!srcClipboard.rows.leng
 function srcInsertRows(dir){ const s=curSrc(); const n=parseInt(prompt("插入行数：","1"))||1; if(n<1){toast("数量无效");return;} const arr=[]; for(let k=0;k<n;k++){const r={};s.fields.forEach(f=>r[f.id]="");arr.push(r);} let idx; if(srcSelRows.length){ idx=dir<0?Math.min(...srcSelRows):Math.max(...srcSelRows)+1; } else { idx=dir<0?0:s.rows.length; } s.rows.splice(idx,0,...arr); srcSelRows=[]; renderSrcEditor(); toast("已插入 "+n+" 行"); }
 function srcClearSel(){ const s=curSrc(); if(!srcSelRows.length){toast("请先选择行");return;} srcSelRows.forEach(i=>{s.fields.forEach(f=>s.rows[i][f.id]="");}); renderSrcEditor(); toast("已清除选中行内容"); }
 function srcDelSel(){ const s=curSrc(); if(!srcSelRows.length){toast("请先选择行");return;} if(!confirm("确定删除选中的 "+srcSelRows.length+" 行？"))return; const del=srcSelRows.slice().sort((a,b)=>b-a); del.forEach(i=>s.rows.splice(i,1)); srcSelRows=[]; renderSrcEditor(); toast("已删除 "+del.length+" 行"); }
+function closeCtxMenu(){ document.querySelectorAll(".ctx-menu").forEach(m=>m.remove()); }
+function showRowMenu(e,ri){
+  e.preventDefault(); e.stopPropagation();
+  if(!srcSelRows.includes(ri)){ srcSelRows=[ri]; renderSrcEditor(); }
+  closeCtxMenu();
+  const menu=document.createElement("div"); menu.className="ctx-menu";
+  menu.innerHTML=`<div class="cm-item" onclick="srcCopySel();closeCtxMenu()"><span class="cm-ico">\ud83d\udcdd</span>复制</div><div class="cm-item" onclick="srcCutSel();closeCtxMenu()"><span class="cm-ico">\u2702</span>剪切</div><div class="cm-item" onclick="srcPaste();closeCtxMenu()"><span class="cm-ico">\ud83d\udccb</span>粘贴</div><div class="cm-sep"></div><div class="cm-item" onclick="srcInsertRows(-1);closeCtxMenu()"><span class="cm-ico">\u2b06</span>向上方插入记录</div><div class="cm-item" onclick="srcInsertRows(1);closeCtxMenu()"><span class="cm-ico">\u2b07</span>向下方插入记录</div><div class="cm-sep"></div><div class="cm-item" onclick="srcClearSel();closeCtxMenu()"><span class="cm-ico">\ud83e\uddf9</span>清除内容</div><div class="cm-item danger" onclick="srcDelSel();closeCtxMenu()"><span class="cm-ico">\ud83d\uddd1</span>删除记录</div>`;
+  document.body.appendChild(menu);
+  const mw=menu.offsetWidth,mh=menu.offsetHeight;
+  menu.style.left=Math.min(e.clientX,window.innerWidth-mw-10)+"px";
+  menu.style.top=Math.min(e.clientY,window.innerHeight-mh-10)+"px";
+  setTimeout(()=>document.addEventListener("click",function h(){closeCtxMenu();document.removeEventListener("click",h);}),0);
+}
+
 
 function renderSrcEditor(){
   const box=document.getElementById("srcEditor"),s=curSrc();
@@ -1191,7 +1215,7 @@ function renderSrcEditor(){
     return `<input ${d} value="${esc(v)}">`;
   };
   const allSel=s.rows.length>0&&srcSelRows.length===s.rows.length;
-  const tableHtml=cols.length?`<div class="data-wrap"><table class="data"><thead><tr><th class="rowno"><input type="checkbox" onchange="toggleSrcAll(this)" ${allSel?"checked":""} title="全选"></th><th class="rowno">#</th>${cols.map(f=>`<th>${esc(f.name)}<span class="th-type">${typeLbl(f.type)}</span></th>`).join("")}<th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}" class="${srcSelRows.includes(ri)?"sel":""}"><td class="rowno"><input type="checkbox" ${srcSelRows.includes(ri)?"checked":""} onchange="toggleSrcRow(${ri})"></td><td class="rowno">${ri+1}</td>${cols.map(f=>`<td>${cellCtrl(f,ri,r)}</td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">该数据源暂无字段，请先添加字段模板。</div>';
+  const tableHtml=cols.length?`<div class="data-wrap"><table class="data"><thead><tr><th class="rowno"><input type="checkbox" onchange="toggleSrcAll(this)" ${allSel?"checked":""} title="全选"></th><th class="rowno">#</th>${cols.map(f=>`<th>${esc(f.name)}<span class="th-type">${typeLbl(f.type)}</span></th>`).join("")}<th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}" class="${srcSelRows.includes(ri)?"sel":""}" oncontextmenu="showRowMenu(event,${ri})"><td class="rowno"><input type="checkbox" ${srcSelRows.includes(ri)?"checked":""} onchange="toggleSrcRow(${ri})"></td><td class="rowno">${ri+1}</td>${cols.map(f=>`<td>${cellCtrl(f,ri,r)}</td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">该数据源暂无字段，请先添加字段模板。</div>';
   box.innerHTML=`<div class="f-label">数据源名称</div><div class="cfg-row"><input id="srcName" value="${esc(s.name)}" style="width:220px"></div><div class="f-label">字段模板（自定义结构）</div><div id="fieldList">${fieldsHtml}</div><button class="btn sm" onclick="addField()">+ 添加字段</button><div class="f-label">数据记录</div><div class="src-ops"><span class="src-selinfo" id="srcSelInfo">已选 ${srcSelRows.length} 行</span><button class="btn sm" onclick="srcCopySel()">复制</button><button class="btn sm" onclick="srcCutSel()">剪切</button><button class="btn sm" onclick="srcPaste()">粘贴</button><button class="btn sm" onclick="srcInsertRows(-1)">上方插入</button><button class="btn sm" onclick="srcInsertRows(1)">下方插入</button><button class="btn sm" onclick="srcClearSel()">清除内容</button><button class="btn sm danger" onclick="srcDelSel()">删除选中</button></div>${tableHtml}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn sm" onclick="addRow()">+ 新增行</button><button class="btn sm" onclick="importToSource('${s.id}')">导入 Excel/CSV</button><button class="btn sm" onclick="pasteToSource('${s.id}')">粘贴数据</button></div>`;
   document.getElementById("srcName").addEventListener("input",e=>s.name=e.target.value);
   document.querySelectorAll("#fieldList [data-fi]").forEach(el=>el.addEventListener("input",()=>{const f=s.fields[+el.dataset.fi];f[el.dataset.k]=el.value;}));
