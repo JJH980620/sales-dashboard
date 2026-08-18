@@ -76,6 +76,9 @@
   .ctx-menu .cm-ico{width:16px;text-align:center;color:var(--sub);}
   .ctx-menu .cm-title{font-size:11px;color:var(--sub);font-weight:700;padding:6px 12px 2px;letter-spacing:.4px;}
   .ctx-menu .cm-item.sel{background:#e8f0fe;color:#1e3a8a;font-weight:600;}
+  #srcEditor table.data thead th.fcol{position:sticky;}
+  #srcEditor .th-resize{position:absolute;top:0;right:0;width:9px;height:100%;cursor:col-resize;z-index:10;user-select:none;touch-action:none;}
+  #srcEditor .th-resize:hover,#srcEditor .th-resize.active{background:rgba(59,111,224,.4);}
   #srcEditor .th-name{cursor:pointer;border-radius:4px;padding:0 2px;}
   #srcEditor .th-name:hover{background:#e8f0fe;color:#1e3a8a;}
   #srcEditor .th-add{cursor:pointer;color:#3b6fe0;font-size:16px;text-align:center;width:34px;}
@@ -1222,6 +1225,36 @@ function applyFreeze(){
     tr.querySelectorAll('td').forEach(td=>{ td.style.left=''; if(td.classList.contains('rowno')||td.classList.contains('fz')){ td.style.position='sticky'; td.style.left=a+'px'; a+=td.offsetWidth; } });
   });
 }
+function startColResize(e,ci){
+  e.preventDefault(); e.stopPropagation();
+  const s=curSrc(),f=s.fields[ci];
+  const table=document.querySelector('#srcEditor table.data');
+  const ths=table.querySelectorAll('thead th.fcol');
+  if(ci>=ths.length) return;
+  const th=ths[ci];
+  const startX=e.clientX, startW=th.offsetWidth;
+  const hnd=th.querySelector('.th-resize'); if(hnd)hnd.classList.add('active');
+  document.body.style.cursor='col-resize'; document.body.style.userSelect='none';
+  function apply(w){
+    w=Math.max(40,Math.round(w)); f.w=w;
+    th.style.minWidth=w+'px'; th.style.width=w+'px';
+    table.querySelectorAll('tbody tr').forEach(tr=>{ const td=tr.querySelectorAll('td')[ci+2]; if(td){td.style.minWidth=w+'px';td.style.width=w+'px';} });
+  }
+  function mm(ev){ apply(startW+(ev.clientX-startX)); }
+  function up(){
+    document.removeEventListener('mousemove',mm); document.removeEventListener('mouseup',up);
+    document.body.style.cursor=''; document.body.style.userSelect='';
+    if(hnd)hnd.classList.remove('active');
+    applyFreeze();
+    state.sources=srcDraft; saveState();
+  }
+  document.addEventListener('mousemove',mm); document.addEventListener('mouseup',up);
+}
+function autoColWidth(ci){
+  const s=curSrc(),f=s.fields[ci];
+  delete f.w;
+  renderSrcEditor();
+}
 function renameField(i){ const f=curSrc().fields[i]; const v=prompt("字段名：",f.name); if(v&&v.trim()){f.name=v.trim();renderSrcEditor();} }
 function setFieldType(i,t){ curSrc().fields[i].type=t; renderSrcEditor(); }
 function setFieldOptions(i){ const f=curSrc().fields[i]; if(f.type!=="single"&&f.type!=="multi"){toast("仅单选/多选字段可设置选项");return;} const v=prompt("选项（逗号分隔）：",f.options||""); if(v!=null){f.options=v;renderSrcEditor();} }
@@ -1254,7 +1287,7 @@ function renderSrcEditor(){
   };
   const allSel=s.rows.length>0&&srcSelRows.length===s.rows.length;
   const fcl=(ci)=>ci<freezeCols?"fz":"";
-  const tableHtml=cols.length?`<div class="data-wrap"><table class="data"><thead><tr><th class="rowno"><input type="checkbox" onchange="toggleSrcAll(this)" ${allSel?"checked":""} title="全选"></th><th class="rowno">#</th>${cols.map((f,ci)=>`<th class="fcol ${fcl(ci)}" oncontextmenu="showHeaderMenu(event,${ci})"><span class="th-name" onclick="renameField(${ci})" title="点击重命名">${esc(f.name)}</span><span class="th-type">${typeLbl(f.type)}</span></th>`).join("")}<th class="th-add" onclick="addField()" title="添加字段">\uff0b</th><th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}" class="${srcSelRows.includes(ri)?"sel":""}" oncontextmenu="showRowMenu(event,${ri})"><td class="rowno"><input type="checkbox" ${srcSelRows.includes(ri)?"checked":""} onchange="toggleSrcRow(${ri})"></td><td class="rowno">${ri+1}</td>${cols.map((f,ci)=>`<td class="${fcl(ci)}">${cellCtrl(f,ri,r)}</td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">该数据源暂无字段，请点击表头“＋”添加字段。</div>';
+  const tableHtml=cols.length?`<div class="data-wrap"><table class="data"><thead><tr><th class="rowno"><input type="checkbox" onchange="toggleSrcAll(this)" ${allSel?"checked":""} title="全选"></th><th class="rowno">#</th>${cols.map((f,ci)=>`<th class="fcol ${fcl(ci)}" oncontextmenu="showHeaderMenu(event,${ci})" data-ci="${ci}" ${f.w?`style="min-width:${f.w}px;width:${f.w}px"`:``}><span class="th-name" onclick="renameField(${ci})" title="点击重命名">${esc(f.name)}</span><span class="th-type">${typeLbl(f.type)}</span><span class="th-resize" onmousedown="startColResize(event,${ci})" ondblclick="autoColWidth(${ci})" title="拖动调整列宽，双击自适应"></span></th>`).join("")}<th class="th-add" onclick="addField()" title="添加字段">\uff0b</th><th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}" class="${srcSelRows.includes(ri)?"sel":""}" oncontextmenu="showRowMenu(event,${ri})"><td class="rowno"><input type="checkbox" ${srcSelRows.includes(ri)?"checked":""} onchange="toggleSrcRow(${ri})"></td><td class="rowno">${ri+1}</td>${cols.map((f,ci)=>`<td class="${fcl(ci)}" ${f.w?`style="min-width:${f.w}px;width:${f.w}px"`:``}>${cellCtrl(f,ri,r)}</td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">该数据源暂无字段，请点击表头“＋”添加字段。</div>';
   box.innerHTML=`<div class="f-label">数据源名称</div><div class="cfg-row"><input id="srcName" value="${esc(s.name)}" style="width:220px"></div><div class="f-label">数据记录</div><div class="src-ops"><span class="src-selinfo" id="srcSelInfo">已选 ${srcSelRows.length} 行</span><button class="btn sm" onclick="srcCopySel()">复制</button><button class="btn sm" onclick="srcCutSel()">剪切</button><button class="btn sm" onclick="srcPaste()">粘贴</button><button class="btn sm" onclick="srcInsertRows(-1)">上方插入</button><button class="btn sm" onclick="srcInsertRows(1)">下方插入</button><button class="btn sm" onclick="srcClearSel()">清除内容</button><button class="btn sm danger" onclick="srcDelSel()">删除选中</button><span class="tb-sep"></span><label style="font-size:12px;color:var(--sub)">冻结前</label><input id="freezeInput" type="number" min="0" max="${Math.max(0,cols.length)}" value="${freezeCols}" style="width:52px" onchange="setFreeze(this.value)"><label style="font-size:12px;color:var(--sub)">列</label></div><div style="font-size:11px;color:var(--sub);margin:4px 0 8px">右键表头可设置字段类型/重命名/插入/删除；点击字段名可直接重命名；右键行可操作</div>${tableHtml}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn sm" onclick="addRow()">+ 新增行</button><button class="btn sm" onclick="importToSource('${s.id}')">导入 Excel/CSV</button><button class="btn sm" onclick="pasteToSource('${s.id}')">粘贴数据</button></div>`;
   document.getElementById("srcName").addEventListener("input",e=>s.name=e.target.value);
   document.querySelectorAll("#srcEditor table.data [data-r][data-f]").forEach(el=>{
