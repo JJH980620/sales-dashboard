@@ -576,6 +576,18 @@ function prevPeriodStart(d,p){ const st=periodStart(d,p);
   const x=new Date(st); x.setFullYear(x.getFullYear()-1); return x;
 }
 function yoyPeriodStart(d,p){ const st=periodStart(d,p); const x=new Date(st); x.setFullYear(x.getFullYear()-1); return x; }
+function inferType(name, vals){
+  const nonEmpty=(vals||[]).filter(v=>v!=null&&String(v).trim()!=="");
+  if(!nonEmpty.length) return "text";
+  const dateKw=/日期|时间|date|time|day|month|year|月份|年月/i.test(String(name||""));
+  const numOk=nonEmpty.filter(v=>!isNaN(Number(v))).length;
+  const dateOk=nonEmpty.filter(v=>parseDate(v)).length;
+  const ratio=nonEmpty.length;
+  if(dateKw && (numOk/ratio>=0.9 || dateOk/ratio>=0.9)) return "date";
+  if(numOk/ratio>=0.9) return "number";
+  if(dateOk/ratio>=0.9) return "date";
+  return "text";
+}
 function aggRows(rows,fieldId,agg){
   const vals=rows.map(r=>num(r[fieldId]));
   if(agg==="sum")return vals.reduce((a,b)=>a+b,0);
@@ -1038,7 +1050,7 @@ function addRow(){ const s=curSrc(); const r={}; s.fields.forEach(f=>r[f.id]="")
 function delRow(i){ curSrc().rows.splice(i,1); renderSrcEditor(); }
 function saveSources(){ state.sources=srcDraft; saveState(); closeModal("srcModal"); render(); toast("数据源已保存"); }
 function importToSource(id){ const inp=document.createElement("input"); inp.type="file"; inp.accept=".xlsx,.xls,.csv,.tsv"; inp.onchange=()=>{ const file=inp.files[0]; if(!file)return; const reader=new FileReader(); reader.onload=e=>{ const data=new Uint8Array(e.target.result); let rows; if(typeof XLSX!=="undefined"){ const wb=XLSX.read(data,{type:"array"}); const ws=wb.Sheets[wb.SheetNames[0]]; rows=XLSX.utils.sheet_to_json(ws,{defval:""}); } else { toast("Excel 解析库未加载（需联网），请使用粘贴方式"); return; } applyImportRows(id,rows); }; reader.readAsArrayBuffer(file); }; inp.click(); }
-function applyImportRows(id,rows){ const s=srcDraft.find(x=>x.id===id); if(!rows||!rows.length){toast("数据为空");return;} const head=Object.keys(rows[0]); const fidMap={}; head.forEach(h=>{ let f=s.fields.find(x=>x.name===h); if(!f){f={id:uid("f"),name:h,type:"number"};s.fields.push(f);} fidMap[h]=f.id; }); s.rows=rows.map(o=>{ const r={}; head.forEach(h=>{r[fidMap[h]]=o[h];}); return r; }); renderSrcEditor(); toast("已导入 "+rows.length+" 行"); }
+function applyImportRows(id,rows){ const s=srcDraft.find(x=>x.id===id); if(!rows||!rows.length){toast("数据为空");return;} const head=Object.keys(rows[0]); const colVals={}; head.forEach(h=>colVals[h]=rows.map(o=>o[h])); const fidMap={}; head.forEach(h=>{ let f=s.fields.find(x=>x.name===h); if(!f){f={id:uid("f"),name:h,type:inferType(h,colVals[h])};s.fields.push(f);} fidMap[h]=f.id; }); s.rows=rows.map(o=>{ const r={}; head.forEach(h=>{r[fidMap[h]]=o[h];}); return r; }); renderSrcEditor(); const t=s.fields.filter(f=>head.includes(f.name)).map(f=>f.type); toast("已导入 "+rows.length+" 行，自动识别字段："+t.join("/")); }
 function pasteToSource(id){ const txt=prompt("粘贴 CSV/TSV 数据（首行为字段名）:"); if(!txt)return; const delim=txt.includes("\t")?"\t":","; const lines=txt.split(/\r?\n/).filter(l=>l.trim()!==""); if(lines.length<2){toast("数据不足");return;} const head=lines[0].split(delim).map(h=>h.trim()); const rows=lines.slice(1).map(l=>{ const c=l.split(delim); const o={}; head.forEach((h,j)=>{ let v=c[j]?.trim()??""; const n=Number(v); o[h]=(v!==""&&!isNaN(n)&&/^[-\d.]+$/.test(v))?n:v; }); return o; }); applyImportRows(id,rows); }
 
 function loadExample(){ state=buildExample(); saveState(); render(); toast("已载入示例"); }
