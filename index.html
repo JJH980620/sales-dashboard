@@ -13,6 +13,15 @@
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:"Microsoft YaHei","PingFang SC","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);padding:20px 24px 48px;}
   .page{max-width:1240px;margin:0 auto;}
+  .login-overlay{position:fixed;inset:0;z-index:120;background:linear-gradient(135deg,#1e3a8a,#0f766e);display:flex;align-items:center;justify-content:center;}
+  .login-overlay.hidden{display:none;}
+  .login-card{background:#fff;border-radius:20px;padding:40px 34px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;}
+  .login-logo{font-size:22px;font-weight:800;color:#1e3a8a;margin-bottom:6px;}
+  .login-sub{font-size:13px;color:#667;margin-bottom:22px;line-height:1.5;}
+  .login-card input{width:100%;padding:12px;border:1px solid #dde3ec;border-radius:10px;font-size:15px;margin-bottom:12px;box-sizing:border-box;outline:none;}
+  .login-card input:focus{border-color:#1e3a8a;box-shadow:0 0 0 3px rgba(30,58,138,.12);}
+  .login-err{color:#ef4444;font-size:12px;margin-top:10px;min-height:16px;}
+  .sec-hint{font-size:11px;color:var(--sub);margin-top:8px;line-height:1.5;}
   .hidden{display:none !important;}
 
   .header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;}
@@ -299,7 +308,17 @@
 </style>
 </head>
 <body>
-<div class="page">
+<div class="login-overlay" id="loginOverlay">
+    <div class="login-card">
+      <div class="login-logo">通用数据看板</div>
+      <div class="login-sub">请输入访问密码，进入你的专属看板板块</div>
+      <input id="loginPwd" type="password" placeholder="输入密码" onkeydown="if(event.key==='Enter')doLogin()">
+      <button class="btn primary" style="width:100%;padding:12px" onclick="doLogin()">进入看板</button>
+      <div class="login-err" id="loginErr"></div>
+    </div>
+  </div>
+
+  <div class="page">
 
   <div class="header">
     <div>
@@ -319,6 +338,8 @@
       <button class="btn ghost" onclick="loadExample()">载入示例</button>
       <button class="btn ghost" onclick="resolveOverlaps()">整理布局</button>
       <button class="btn ghost" onclick="resetAll()">重置</button>
+      <button class="btn ghost" id="secBtn" onclick="openSections()" style="display:none">板块管理</button>
+      <button class="btn ghost" onclick="logout()">退出登录</button>
     </div>
   </div>
 
@@ -397,6 +418,20 @@
   </div>
 </div>
 
+<div class="modal-mask hidden" id="secModal">
+  <div class="modal" style="max-width:720px">
+    <div class="modal-head"><h3>板块与密码管理（管理员）</h3><span class="x" onclick="closeModal('secModal')">&times;</span></div>
+    <div class="modal-body">
+      <div class="f-label">现有板块（各自密码登录进入）</div>
+      <div id="secList"></div>
+      <div class="f-label" style="margin-top:14px">新增板块</div>
+      <div class="cfg-row"><input id="newSecPwd" placeholder="新密码（如 123456）" style="width:160px"><input id="newSecName" placeholder="板块名称（如 财务看板）" style="flex:1"><button class="btn sm" onclick="addSection()">+ 新增</button></div>
+      <div class="sec-hint">每个密码登录后进入独立板块，数据相互隔离。管理员（980620）可进入编辑任意板块、重置为示例或删除。普通密码只能访问自己的板块。</div>
+    </div>
+    <div class="modal-foot"><button class="btn primary" onclick="closeModal('secModal')">完成</button></div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://unpkg.com/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -413,6 +448,8 @@ const COLORS=["blue","green","gray","purple","teal","orange","pink","red"];
 const TYPE_LABEL={kpi:"KPI 指标卡组",cards:"多指标卡片组",rank:"排行榜",table:"明细表",stat:"统计数字卡",text:"文本模块",chart:"图表",gauge:"仪表盘/进度环",metric:"指标板",image:"图片",button:"按钮",progress:"进度图",wordcloud:"词云图",divider:"标题/分隔线",gantt:"甘特图"};
 const CHART_TYPES=["bar","barH","stackBar","line","area","pie","doughnut","funnel","radar","scatter","heatmap"];
 const LS_KEY="dashBuilder_v4";
+const LS_AUTH="dashBuilder_auth_v1";
+const LS_LOGIN="dashBuilder_login";
 const CANVAS_W=1200, GRID=10, GAP=16, MINW=200, MINH=120;
 const DEF_SIZE={kpi:[1200,190],cards:[1200,420],rank:[590,360],table:[1200,320],stat:[320,170],text:[1200,130],chart:[590,380],gauge:[590,380],metric:[590,320],image:[400,300],button:[240,120],progress:[590,180],wordcloud:[590,360],divider:[590,80],gantt:[680,360]};
 
@@ -462,9 +499,15 @@ function migrate(s){
   s.theme=s.theme||"light"; s.showGrid=s.showGrid||false; s.gridSize=s.gridSize||20; s.exportScale=s.exportScale||2; s.bgImage=s.bgImage||"";
   return s;
 }
-let state=migrate(loadState());
-function loadState(){ try{ return JSON.parse(localStorage.getItem(LS_KEY)); }catch(e){ return null; } }
-function saveState(){ try{ localStorage.setItem(LS_KEY,JSON.stringify(state)); }catch(e){} }
+let curPwd="_admin", curRole="admin";
+let AUTH={admin:"980620", sections:[]};
+let state=null;
+function loadState(){ try{ return JSON.parse(localStorage.getItem(LS_KEY+"_"+curPwd)); }catch(e){ return null; } }
+function saveState(){ try{ localStorage.setItem(LS_KEY+"_"+curPwd,JSON.stringify(state)); }catch(e){} }
+function loadStateFor(pwd){ try{ return JSON.parse(localStorage.getItem(LS_KEY+"_"+pwd)); }catch(e){ return null; } }
+function saveStateFor(pwd,st){ try{ localStorage.setItem(LS_KEY+"_"+pwd,JSON.stringify(st)); }catch(e){} }
+function loadAuth(){ try{ const a=JSON.parse(localStorage.getItem(LS_AUTH)); if(a&&a.admin)return a; }catch(e){} return {admin:"980620",sections:[]}; }
+function saveAuth(){ try{ localStorage.setItem(LS_AUTH,JSON.stringify(AUTH)); }catch(e){} }
 function currentDash(){ return state.dashboards.find(d=>d.id===state.currentId)||state.dashboards[0]; }
 function getSource(id){ return state.sources.find(s=>s.id===id); }
 function fieldName(s,fid){ const f=s.fields.find(x=>x.id===fid); return f?f.name:""; }
@@ -1258,7 +1301,93 @@ function toggleWidgetVis(id) {
 let tableSortState = {};
 let tableSearchState = {};
 
+/* ================= 密码登录 & 板块权限隔离 ================= */
+function migrateOldData(){
+  try{
+    if(!localStorage.getItem(LS_KEY+"_"+curPwd)){
+      const old=localStorage.getItem(LS_KEY);
+      if(old) localStorage.setItem(LS_KEY+"_"+curPwd, old);
+    }
+  }catch(e){}
+}
+function initLogin(){
+  AUTH=loadAuth();
+  migrateOldData();
+  let remember=null;
+  try{ remember=localStorage.getItem(LS_LOGIN); }catch(e){}
+  let ok=false;
+  if(remember==="_admin"){ curPwd="_admin"; curRole="admin"; ok=true; }
+  else if(remember && AUTH.sections.some(s=>s.pwd===remember)){ curPwd=remember; curRole="user"; ok=true; }
+  state=migrate(loadState());
+  applyRoleUI();
+  const ov=document.getElementById("loginOverlay");
+  if(ov) ov.classList.toggle("hidden", !!ok);
+}
+function doLogin(){
+  const inp=document.getElementById("loginPwd");
+  const v=(inp?inp.value:"").trim();
+  const err=document.getElementById("loginErr");
+  if(!v){ if(err)err.textContent="请输入密码"; return; }
+  if(v===AUTH.admin){ enterSession({pwd:"_admin",role:"admin"}); return; }
+  if(AUTH.sections.some(s=>s.pwd===v)){ enterSession({pwd:v,role:"user"}); return; }
+  if(err)err.textContent="密码错误，请重试";
+}
+function enterSession(se){
+  curPwd=se.pwd; curRole=se.role;
+  try{ localStorage.setItem(LS_LOGIN,curPwd); }catch(e){}
+  state=migrate(loadState());
+  applyRoleUI();
+  const ov=document.getElementById("loginOverlay"); if(ov)ov.classList.add("hidden");
+  const inp=document.getElementById("loginPwd"); if(inp)inp.value="";
+  const err=document.getElementById("loginErr"); if(err)err.textContent="";
+  render();
+}
+function logout(){
+  try{ localStorage.removeItem(LS_LOGIN); }catch(e){}
+  const ov=document.getElementById("loginOverlay"); if(ov)ov.classList.remove("hidden");
+  const inp=document.getElementById("loginPwd"); if(inp)inp.value="";
+  const err=document.getElementById("loginErr"); if(err)err.textContent="";
+}
+function applyRoleUI(){
+  const b=document.getElementById("secBtn");
+  if(b) b.style.display=(curRole==="admin")?"":"none";
+}
+/* 板块管理（管理员） */
+function openSections(){ renderSections(); showModal("secModal"); }
+function renderSections(){
+  const list=document.getElementById("secList");
+  if(!list) return;
+  list.innerHTML=AUTH.sections.map(s=>{ const st=loadStateFor(s.pwd)||{}; const n=(st.dashboards&&st.dashboards.length)||0; return `<div class="cfg-item"><div class="cfg-head"><span>${esc(s.name||s.pwd)} <span style="color:var(--sub);font-weight:400">看板 ${n} 个</span></span><span style="display:flex;gap:8px"><span class="c-del" onclick="editSection('${esc(s.pwd)}')">进入编辑</span><span class="c-del" onclick="resetSection('${esc(s.pwd)}')">重置示例</span><span class="c-del" onclick="delSection('${esc(s.pwd)}')">删除</span></span></div><div style="font-size:12px;color:var(--sub)">密码：${esc(s.pwd)}</div></div>`; }).join("")||'<div class="empty">暂无其他板块，可输入下方新密码创建。</div>';
+}
+function addSection(){
+  const p=document.getElementById("newSecPwd").value.trim();
+  const n=document.getElementById("newSecName").value.trim();
+  if(!p){ toast("请输入新密码"); return; }
+  if(p===AUTH.admin){ toast("该密码为管理员密码，不能占用"); return; }
+  if(AUTH.sections.some(s=>s.pwd===p)){ toast("该密码已存在"); return; }
+  AUTH.sections.push({pwd:p,name:n||("板块"+(AUTH.sections.length+1))});
+  saveAuth();
+  document.getElementById("newSecPwd").value=""; document.getElementById("newSecName").value="";
+  renderSections(); toast("已新增板块："+p);
+}
+function delSection(p){
+  if(!confirm("确定删除板块 "+p+" 及其全部看板数据？")) return;
+  AUTH.sections=AUTH.sections.filter(s=>s.pwd!==p);
+  try{ localStorage.removeItem(LS_KEY+"_"+p); }catch(e){}
+  saveAuth(); renderSections(); toast("已删除板块："+p);
+}
+function editSection(p){
+  enterSession({pwd:p, role:"admin"});
+  closeModal("secModal");
+  toast("已进入编辑板块："+p);
+}
+function resetSection(p){
+  if(!confirm("将板块 "+p+" 重置为示例内容？")) return;
+  saveStateFor(p, buildExample());
+  renderSections(); toast("已重置板块："+p);
+}
 
+initLogin();
 render();
 </script>
 </body>
