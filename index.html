@@ -22,6 +22,10 @@
   .login-card input:focus{border-color:#1e3a8a;box-shadow:0 0 0 3px rgba(30,58,138,.12);}
   .login-err{color:#ef4444;font-size:12px;margin-top:10px;min-height:16px;}
   .sec-hint{font-size:11px;color:var(--sub);margin-top:8px;line-height:1.5;}
+  .data .rowno{color:var(--sub);font-size:11px;text-align:center;width:30px;background:#f7f9fc;font-weight:400;}
+  .data th .th-type{display:block;font-size:10px;color:var(--sub);font-weight:400;margin-top:2px;}
+  .field-typetag{font-size:11px;color:#3b6fe0;background:#eef2fb;border-radius:6px;padding:2px 7px;white-space:nowrap;}
+  .field-opt{font-size:11px;color:var(--sub);margin-left:6px;}
   .hidden{display:none !important;}
 
   .header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:14px;}
@@ -446,6 +450,7 @@ function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg
 const AGGS=["sum","avg","count","max","min"]; const AGG_LABELS={sum:"\u6c42\u548c",avg:"\u5e73\u5747\u503c",count:"\u8ba1\u6570",max:"\u6700\u5927\u503c",min:"\u6700\u5c0f\u503c"};
 const COLORS=["blue","green","gray","purple","teal","orange","pink","red"];
 const TYPE_LABEL={kpi:"KPI 指标卡组",cards:"多指标卡片组",rank:"排行榜",table:"明细表",stat:"统计数字卡",text:"文本模块",chart:"图表",gauge:"仪表盘/进度环",metric:"指标板",image:"图片",button:"按钮",progress:"进度图",wordcloud:"词云图",divider:"标题/分隔线",gantt:"甘特图"};
+const FIELD_TYPES=[["text","\u6587\u672c"],["number","\u6570\u5b57"],["date","\u65e5\u671f"],["money","\u8d27\u5e01"],["single","\u5355\u9009"],["multi","\u591a\u9009"],["bool","\u590d\u9009\u6846"]];
 const CHART_TYPES=["bar","barH","stackBar","line","area","pie","doughnut","funnel","radar","scatter","heatmap"];
 const LS_KEY="dashBuilder_v4";
 const LS_AUTH="dashBuilder_auth_v1";
@@ -511,7 +516,14 @@ function saveAuth(){ try{ localStorage.setItem(LS_AUTH,JSON.stringify(AUTH)); }c
 function currentDash(){ return state.dashboards.find(d=>d.id===state.currentId)||state.dashboards[0]; }
 function getSource(id){ return state.sources.find(s=>s.id===id); }
 function fieldName(s,fid){ const f=s.fields.find(x=>x.id===fid); return f?f.name:""; }
-function fieldVal(s,row,fid){ return row[fid]===undefined?"":row[fid]; }
+function fieldVal(s,row,fid){
+  const v=row[fid]===undefined?"":row[fid];
+  const f=s.fields.find(x=>x.id===fid);
+  if(!f) return v;
+  if(f.type==="money"&&v!==""&&!isNaN(Number(v))) return "¥"+Number(v).toLocaleString();
+  if(f.type==="bool") return v?"\u2713":"\u2717";
+  return v;
+}
 
 /* ================= 看板管理 ================= */
 function renderTabs(){ document.getElementById("dashTabs").innerHTML=state.dashboards.map(d=>`<div class="dash-tab ${d.id===state.currentId?"active":""}" onclick="switchDashboard('${d.id}')"><span>${esc(d.name)}</span><button class="menu-btn" onclick="event.stopPropagation();openDashMenu(event,'${d.id}')">&#8942;</button></div>`).join(""); }
@@ -627,7 +639,7 @@ function inferType(name, vals){
   const dateOk=nonEmpty.filter(v=>parseDate(v)).length;
   const ratio=nonEmpty.length;
   if(dateKw && (numOk/ratio>=0.9 || dateOk/ratio>=0.9)) return "date";
-  if(numOk/ratio>=0.9) return "number";
+  if(numOk/ratio>=0.9) return /\u91d1\u989d|\u4ef7\u683c|\u4ef7|money|amount|price|\u603b\u989d|\u8d39\u7528|\u6210\u672c|\u9500\u552e\u989d|\u6536\u5165/i.test(String(name||""))?"money":"number";
   if(dateOk/ratio>=0.9) return "date";
   return "text";
 }
@@ -1086,8 +1098,36 @@ function selectSrc(id){ curSrcId=id; renderSrcList(); renderSrcEditor(); }
 function addSource(){ const s={id:uid("s"),name:"数据源"+(srcDraft.length+1),fields:[],rows:[]}; srcDraft.push(s); curSrcId=s.id; renderSrcList(); renderSrcEditor(); }
 function delSource(id){ srcDraft=srcDraft.filter(s=>s.id!==id); curSrcId=srcDraft.length?srcDraft[0].id:null; renderSrcList(); renderSrcEditor(); }
 function curSrc(){ return srcDraft.find(s=>s.id===curSrcId); }
-function renderSrcEditor(){ const box=document.getElementById("srcEditor"),s=curSrc(); if(!s){box.innerHTML='<div class="empty">请选择或新建数据源。</div>';return;} const fieldsHtml=s.fields.map((f,i)=>`<div class="field-row"><input data-fi="${i}" data-k="name" value="${esc(f.name)}" placeholder="字段名" style="width:160px"><select data-fi="${i}" data-k="type"><option value="number" ${f.type==="number"?"selected":""}>数字</option><option value="text" ${f.type==="text"?"selected":""}>文本</option><option value="date" ${f.type==="date"?"selected":""}>日期</option></select><span class="fd" onclick="delField(${i})">删除</span></div>`).join(""); const cols=s.fields; const tableHtml=cols.length?`<table class="data"><thead><tr>${cols.map(f=>`<th>${esc(f.name)}</th>`).join("")}<th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}">${cols.map(f=>`<td><input data-r="${ri}" data-f="${f.id}" value="${esc(r[f.id]??"")}"></td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table>`:'<div class="hint">该数据源暂无字段，请先添加字段模板。</div>'; box.innerHTML=`<div class="f-label">数据源名称</div><div class="cfg-row"><input id="srcName" value="${esc(s.name)}" style="width:220px"></div><div class="f-label">字段模板（自定义结构）</div><div id="fieldList">${fieldsHtml}</div><button class="btn sm" onclick="addField()">+ 添加字段</button><div class="f-label">数据记录</div>${tableHtml}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn sm" onclick="addRow()">+ 新增行</button><button class="btn sm" onclick="importToSource('${s.id}')">导入 Excel/CSV</button><button class="btn sm" onclick="pasteToSource('${s.id}')">粘贴数据</button></div>`; document.getElementById("srcName").addEventListener("input",e=>s.name=e.target.value); document.querySelectorAll("#fieldList [data-fi]").forEach(el=>el.addEventListener("input",()=>{const f=s.fields[+el.dataset.fi];f[el.dataset.k]=el.value;})); document.querySelectorAll("#srcEditor table.data input").forEach(el=>el.addEventListener("input",()=>{s.rows[+el.dataset.r][el.dataset.f]=el.value;})); }
-function addField(){ const s=curSrc(); s.fields.push({id:uid("f"),name:"新字段",type:"number"}); renderSrcEditor(); }
+function renderSrcEditor(){
+  const box=document.getElementById("srcEditor"),s=curSrc();
+  if(!s){box.innerHTML='<div class="empty">请选择或新建数据源。</div>';return;}
+  const typeLbl=t=>{const o=FIELD_TYPES.find(x=>x[0]===t);return o?o[1]:t;};
+  const fieldsHtml=s.fields.map((f,i)=>{
+    const optField=(f.type==="single"||f.type==="multi")?`<input data-fi="${i}" data-k="options" value="${esc(f.options||"")}" placeholder="选项，逗号分隔" style="width:180px" class="field-opt">`:'';
+    return `<div class="field-row"><input data-fi="${i}" data-k="name" value="${esc(f.name)}" placeholder="字段名" style="width:150px"><select data-fi="${i}" data-k="type" onchange="renderSrcEditor()">${FIELD_TYPES.map(ft=>`<option value="${ft[0]}" ${f.type===ft[0]?"selected":""}>${ft[1]}</option>`).join("")}</select>${optField}<span class="field-typetag">${typeLbl(f.type)}</span><span class="fd" onclick="delField(${i})">删除</span></div>`;
+  }).join("");
+  const cols=s.fields;
+  const cellCtrl=(f,ri,r)=>{
+    const v=r[f.id]===undefined?"":r[f.id];
+    const d=`data-r="${ri}" data-f="${f.id}"`;
+    if(f.type==="bool") return `<input type="checkbox" ${d} ${v?"checked":""}>`;
+    if(f.type==="single"){ const opts=(f.options||"").split(",").map(o=>o.trim()).filter(Boolean); return `<select ${d}><option value="">--</option>${opts.map(o=>`<option value="${esc(o)}" ${String(v)===o?"selected":""}>${esc(o)}</option>`).join("")}</select>`; }
+    if(f.type==="multi"){ return `<input ${d} value="${esc(Array.isArray(v)?v.join(","):v)}" placeholder="多选，逗号分隔">`; }
+    if(f.type==="money"||f.type==="number") return `<input ${d} type="number" value="${esc(v)}">`;
+    return `<input ${d} value="${esc(v)}">`;
+  };
+  const tableHtml=cols.length?`<table class="data"><thead><tr><th class="rowno">#</th>${cols.map(f=>`<th>${esc(f.name)}<span class="th-type">${typeLbl(f.type)}</span></th>`).join("")}<th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}"><td class="rowno">${ri+1}</td>${cols.map(f=>`<td>${cellCtrl(f,ri,r)}</td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table>`:'<div class="hint">该数据源暂无字段，请先添加字段模板。</div>';
+  box.innerHTML=`<div class="f-label">数据源名称</div><div class="cfg-row"><input id="srcName" value="${esc(s.name)}" style="width:220px"></div><div class="f-label">字段模板（自定义结构）</div><div id="fieldList">${fieldsHtml}</div><button class="btn sm" onclick="addField()">+ 添加字段</button><div class="f-label">数据记录</div>${tableHtml}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn sm" onclick="addRow()">+ 新增行</button><button class="btn sm" onclick="importToSource('${s.id}')">导入 Excel/CSV</button><button class="btn sm" onclick="pasteToSource('${s.id}')">粘贴数据</button></div>`;
+  document.getElementById("srcName").addEventListener("input",e=>s.name=e.target.value);
+  document.querySelectorAll("#fieldList [data-fi]").forEach(el=>el.addEventListener("input",()=>{const f=s.fields[+el.dataset.fi];f[el.dataset.k]=el.value;}));
+  document.querySelectorAll("#srcEditor table.data [data-r][data-f]").forEach(el=>{
+    const ri=+el.dataset.r,fid=el.dataset.f;
+    if(el.type==="checkbox"){ el.addEventListener("change",()=>{s.rows[ri][fid]=el.checked;}); }
+    else if(el.tagName==="SELECT"){ el.addEventListener("change",()=>{s.rows[ri][fid]=el.value;}); }
+    else { el.addEventListener("input",()=>{s.rows[ri][fid]=el.value;}); }
+  });
+}
+function addField(){ const s=curSrc(); s.fields.push({id:uid("f"),name:"新字段",type:"text"}); renderSrcEditor(); }
 function delField(i){ const s=curSrc(); const fid=s.fields[i].id; s.fields.splice(i,1); s.rows.forEach(r=>delete r[fid]); renderSrcEditor(); }
 function addRow(){ const s=curSrc(); const r={}; s.fields.forEach(f=>r[f.id]=""); s.rows.push(r); renderSrcEditor(); }
 function delRow(i){ curSrc().rows.splice(i,1); renderSrcEditor(); }
