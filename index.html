@@ -42,6 +42,7 @@
   .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 14px rgba(30,50,80,.08);}
   .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
   .panel-head h3{font-size:16px;font-weight:700;}
+  .panel-head .p-title{font-size:15px;color:var(--ink);font-weight:600;}
   .panel-head .x{cursor:pointer;font-size:22px;color:var(--sub);line-height:1;}
   .panel-foot{margin-top:16px;display:flex;justify-content:flex-end;gap:8px;}
   .tabs-wrap{display:none;}
@@ -442,11 +443,6 @@
     </div>
   </div>
 
-  <div class="tabs-wrap">
-    <span class="tabs-label">看板</span>
-    <div class="dash-tabs" id="dashTabs"></div>
-    <span class="dash-add" onclick="addDashboard()" title="新建看板">+ 新建看板</span>
-  </div>
 
   <!-- 全局筛选器 -->
   <div class="filter-bar hidden" id="filterBar">
@@ -462,7 +458,7 @@
   <div id="canvas"></div>
 
     <div id="srcPanel" class="panel hidden">
-      <div class="panel-head"><h3>数据源管理</h3><span class="x" onclick="showView('canvas')">&times;</span></div>
+      <div class="panel-head"><span class="p-title">数据源</span><span class="x" onclick="showView('canvas')">&times;</span></div>
       <div id="srcEditor"></div>
       <div class="panel-foot"><button class="btn" onclick="showView('canvas')">返回看板</button><button class="btn primary" onclick="saveSources()">保存全部</button></div>
     </div>
@@ -617,11 +613,11 @@ function fieldVal(s,row,fid){
 }
 
 /* ================= 看板管理 ================= */
-function renderTabs(){ document.getElementById("dashTabs").innerHTML=state.dashboards.map(d=>`<div class="dash-tab ${d.id===state.currentId?"active":""}" onclick="switchDashboard('${d.id}')"><span>${esc(d.name)}</span><button class="menu-btn" onclick="event.stopPropagation();openDashMenu(event,'${d.id}')">&#8942;</button></div>`).join(""); }
+function renderTabs(){ const el=document.getElementById("dashTabs"); if(!el) return; el.innerHTML=state.dashboards.map(d=>`<div class="dash-tab ${d.id===state.currentId?"active":""}" onclick="switchDashboard('${d.id}')"><span>${esc(d.name)}</span><button class="menu-btn" onclick="event.stopPropagation();openDashMenu(event,'${d.id}')">&#8942;</button></div>`).join(""); }
 function switchDashboard(id){ if(id===state.currentId) return; state.currentId=id; saveState(); render(); }
 function addDashboard(){ const n=state.dashboards.length+1; const d={id:uid("d"),name:"新看板"+n,widgets:[]}; state.dashboards.push(d); state.currentId=d.id; saveState(); render(); toast("已新建看板："+d.name); }
-function renameDashboard(id){ const d=state.dashboards.find(x=>x.id===id); if(!d)return; const v=prompt("重命名看板：",d.name); if(v&&v.trim()){ d.name=v.trim(); saveState(); renderTabs(); } }
-function dupDashboard(id){ const d=state.dashboards.find(x=>x.id===id); if(!d)return; const copy=JSON.parse(JSON.stringify(d)); copy.id=uid("d"); copy.name=d.name+"(副本)"; copy.widgets=copy.widgets.map(w=>{w.id=uid("w");return w;}); autoLayout(copy.widgets); state.dashboards.splice(state.dashboards.indexOf(d)+1,0,copy); saveState(); renderTabs(); toast("已复制看板"); }
+function renameDashboard(id){ const d=state.dashboards.find(x=>x.id===id); if(!d)return; const v=prompt("重命名看板：",d.name); if(v&&v.trim()){ d.name=v.trim(); saveState(); render(); } }
+function dupDashboard(id){ const d=state.dashboards.find(x=>x.id===id); if(!d)return; const copy=JSON.parse(JSON.stringify(d)); copy.id=uid("d"); copy.name=d.name+"(副本)"; copy.widgets=copy.widgets.map(w=>{w.id=uid("w");return w;}); autoLayout(copy.widgets); state.dashboards.splice(state.dashboards.indexOf(d)+1,0,copy); saveState(); render(); toast("已复制看板"); }
 function delDashboard(id){ if(state.dashboards.length<=1){ toast("至少保留一个看板"); return; } if(!confirm("确定删除该看板及全部组件？"))return; state.dashboards=state.dashboards.filter(x=>x.id!==id); if(state.currentId===id) state.currentId=state.dashboards[0].id; saveState(); render(); toast("看板已删除"); }
 function openDashMenu(e,id){ document.querySelectorAll(".menu").forEach(m=>m.remove()); const menu=document.createElement("div"); menu.className="menu"; menu.innerHTML=`<div class="mi" onclick="renameDashboard('${id}');this.closest('.menu').remove()">重命名</div><div class="mi" onclick="dupDashboard('${id}');this.closest('.menu').remove()">复制看板</div><div class="mi danger" onclick="delDashboard('${id}');this.closest('.menu').remove()">删除看板</div>`; document.body.appendChild(menu); const r=menu.getBoundingClientRect(); menu.style.left=Math.min(e.clientX,window.innerWidth-r.width-10)+"px"; menu.style.top=(e.clientY+8)+"px"; setTimeout(()=>document.addEventListener("click",function h(){menu.remove();document.removeEventListener("click",h);}),0); }
 
@@ -1374,8 +1370,7 @@ function renderSrcEditor(){
   const allSel=s.rows.length>0&&srcSelRows.length===s.rows.length;
   const fcl=(ci)=>ci<freezeCols?"fz":"";
   const tableHtml=cols.length?`<div class="data-wrap"><table class="data"><thead><tr><th class="rowno"><input type="checkbox" onchange="toggleSrcAll(this)" ${allSel?"checked":""} title="全选"></th><th class="rowno">#</th>${cols.map((f,ci)=>`<th class="fcol ${fcl(ci)}" oncontextmenu="showHeaderMenu(event,${ci})" data-ci="${ci}" ${f.w?`style="min-width:${f.w}px;width:${f.w}px"`:``}><span class="th-name" onclick="renameField(${ci})" title="点击重命名">${esc(f.name)}</span><span class="th-type">${typeLbl(f.type)}</span><span class="th-resize" onmousedown="startColResize(event,${ci})" ondblclick="autoColWidth(${ci})" title="拖动调整列宽，双击自适应"></span></th>`).join("")}<th class="th-add" onclick="addField()" title="添加字段">\uff0b</th><th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}" class="${srcSelRows.includes(ri)?"sel":""}" oncontextmenu="showRowMenu(event,${ri})"><td class="rowno"><input type="checkbox" ${srcSelRows.includes(ri)?"checked":""} onchange="toggleSrcRow(${ri})"></td><td class="rowno">${ri+1}</td>${cols.map((f,ci)=>`<td class="${fcl(ci)} ${inSel(ri,ci)?"cells-sel":""}" data-r="${ri}" data-ci="${ci}" ${f.w?`style="min-width:${f.w}px;width:${f.w}px"`:``}>${cellCtrl(f,ri,r)}</td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">该数据源暂无字段，请点击表头“＋”添加字段。</div>';
-  box.innerHTML=`<div class="f-label">数据源名称</div><div class="cfg-row"><input id="srcName" value="${esc(s.name)}" style="width:220px"></div><div class="f-label">数据记录</div><div class="src-ops"><span class="src-selinfo" id="srcSelInfo">已选 ${srcSelRows.length} 行</span><span class="tb-sep"></span><label style="font-size:12px;color:var(--sub)">冻结前</label><input id="freezeInput" type="number" min="0" max="${Math.max(0,cols.length)}" value="${freezeCols}" style="width:52px" onchange="setFreeze(this.value)"><label style="font-size:12px;color:var(--sub)">列</label></div><div style="font-size:11px;color:var(--sub);margin:4px 0 8px">右键行/表头可操作；选中行后 Ctrl+C/V/X 复制粘贴、Backspace 清除；可从其他表格复制后直接粘贴到此处</div>${tableHtml}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn sm" onclick="addRow()">+ 新增行</button><button class="btn sm" onclick="importToSource('${s.id}')">导入 Excel/CSV</button><button class="btn sm" onclick="pasteToSource('${s.id}')">粘贴数据</button></div>`;
-  document.getElementById("srcName").addEventListener("input",e=>s.name=e.target.value);
+  box.innerHTML=`<div class="f-label">数据记录</div><div class="src-ops"><span class="src-selinfo" id="srcSelInfo">已选 ${srcSelRows.length} 行</span><span class="tb-sep"></span><label style="font-size:12px;color:var(--sub)">冻结前</label><input id="freezeInput" type="number" min="0" max="${Math.max(0,cols.length)}" value="${freezeCols}" style="width:52px" onchange="setFreeze(this.value)"><label style="font-size:12px;color:var(--sub)">列</label></div><div style="font-size:11px;color:var(--sub);margin:4px 0 8px">右键行/表头可操作；选中行后 Ctrl+C/V/X 复制粘贴、Backspace 清除；可从其他表格复制后直接粘贴到此处</div>${tableHtml}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn sm" onclick="addRow()">+ 新增行</button><button class="btn sm" onclick="importToSource('${s.id}')">导入 Excel/CSV</button><button class="btn sm" onclick="pasteToSource('${s.id}')">粘贴数据</button></div>`;
   document.querySelectorAll("#srcEditor table.data [data-r][data-f]").forEach(el=>{
     const ri=+el.dataset.r,fid=el.dataset.f;
     if(el.type==="checkbox"){ el.addEventListener("change",()=>{s.rows[ri][fid]=el.checked;}); }
@@ -1395,7 +1390,8 @@ function renderSrcEditor(){
         const t2=ev.target.closest("td"); if(t2&&t2.dataset.r!==undefined&&t2.dataset.ci!==undefined){
           const nr=+t2.dataset.r,nc=+t2.dataset.ci;
           srcSelRange={r0:Math.min(drag.r,nr),c0:Math.min(drag.c,nc),r1:Math.max(drag.r,nr),c1:Math.max(drag.c,nc)};
-          renderSrcEditor();
+          const tb=document.querySelector('#srcEditor table.data tbody');
+          if(tb) tb.querySelectorAll('td[data-r][data-ci]').forEach(td=>{ td.classList.toggle('cells-sel', inSel(+td.dataset.r,+td.dataset.ci)); });
         }
       }
       function up(){
@@ -1439,9 +1435,9 @@ function showSrcPanel(){
 }
 function renderSidebar(){
   const dl=document.getElementById("sbDashList");
-  if(dl) dl.innerHTML=state.dashboards.map(d=>`<div class="sb-item ${d.id===state.currentId?"active":""}" onclick="switchDashboard('${d.id}');showView('canvas')"><span>${esc(d.name)}</span></div>`).join("");
+  if(dl) dl.innerHTML=state.dashboards.map(d=>`<div class="sb-item ${d.id===state.currentId?"active":""}" onclick="switchDashboard('${d.id}');showView('canvas')" oncontextmenu="dashMenu(event,'${d.id}')" ondblclick="renameDashboard('${d.id}')" title="双击重命名，右键更多操作"><span class="sb-sname">${esc(d.name)}</span></div>`).join("");
   const sl=document.getElementById("sbSrcList");
-  if(sl) sl.innerHTML=state.sources.map(s=>`<div class="sb-item ${s.id===curSrcId?"active":""}" onclick="openSourceEdit('${s.id}')"><span class="sb-sname">${esc(s.name)}</span><span class="sb-del" onclick="event.stopPropagation();delSrcSide('${s.id}')" title="删除数据源">删除</span></div>`).join("");
+  if(sl) sl.innerHTML=state.sources.map(s=>`<div class="sb-item ${s.id===curSrcId?"active":""}" onclick="openSourceEdit('${s.id}')"><span class="sb-sname" ondblclick="event.stopPropagation();renameSource('${s.id}')" title="双击重命名">${esc(s.name)}</span><span class="sb-del" onclick="event.stopPropagation();delSrcSide('${s.id}')" title="删除数据源">删除</span></div>`).join("");
   const sb=document.getElementById("sbSecBlock");
   if(sb) sb.style.display=(curRole==="admin")?"":"none";
 }
@@ -1463,6 +1459,20 @@ function delSrcSide(id){
   }
   renderSidebar();
   if(panelOpen) renderSrcEditor();
+}
+function renameSource(id){
+  const s=state.sources.find(x=>x.id===id); if(!s) return;
+  const v=prompt("重命名数据源：",s.name); if(v&&v.trim()){ s.name=v.trim(); saveState(); renderSidebar(); }
+}
+function dashMenu(e,id){
+  e.preventDefault(); e.stopPropagation(); closeCtxMenu();
+  const menu=document.createElement("div"); menu.className="ctx-menu";
+  menu.innerHTML=`<div class="cm-item" onclick="renameDashboard('${id}');closeCtxMenu()"><span class="cm-ico">\u270f</span>重命名看板</div><div class="cm-item" onclick="dupDashboard('${id}');closeCtxMenu()"><span class="cm-ico">\ud83d\udccb</span>复制看板</div><div class="cm-sep"></div><div class="cm-item danger" onclick="delDashboard('${id}');closeCtxMenu()">\ud83d\uddd1 删除看板</div>`;
+  document.body.appendChild(menu);
+  const mw=menu.offsetWidth,mh=menu.offsetHeight;
+  menu.style.left=Math.min(e.clientX,window.innerWidth-mw-10)+"px";
+  menu.style.top=Math.min(e.clientY,window.innerHeight-mh-10)+"px";
+  setTimeout(()=>document.addEventListener("click",function h(){closeCtxMenu();document.removeEventListener("click",h);}),0);
 }
 function openSourceEdit(id){ showSrcPanel(); selectSrc(id); }
 function closeModal(id){ document.getElementById(id).classList.add("hidden"); }
