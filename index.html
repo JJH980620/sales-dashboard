@@ -33,6 +33,21 @@
   .panel-head .x{cursor:pointer;font-size:22px;color:var(--sub);line-height:1;}
   .panel-foot{margin-top:16px;display:flex;justify-content:flex-end;gap:8px;}
   .tabs-wrap{display:none;}
+  /* ===== 适配优化（对标 WPS/飞书） ===== */
+  .header .title{font-size:22px;font-weight:800;letter-spacing:.2px;}
+  .header .sub{font-size:12.5px;}
+  .toolbar{gap:6px;}
+  .tb-sep{width:1px;height:20px;background:var(--line);margin:0 3px;flex-shrink:0;}
+  .btn{height:34px;display:inline-flex;align-items:center;justify-content:center;padding:0 14px;box-sizing:border-box;}
+  .sb-brand{font-size:16px;letter-spacing:.4px;}
+  .sb-block+.sb-block{border-top:1px solid var(--line);padding-top:10px;margin-top:4px;}
+  .sb-title{font-size:11px;color:var(--sub);font-weight:700;letter-spacing:.5px;padding:4px 8px;margin-bottom:4px;display:flex;align-items:center;gap:5px;}
+  .sb-item{margin-bottom:2px;}
+  .sb-item .mi-hint{opacity:0;transition:.15s;}
+  .sb-item:hover .mi-hint{opacity:1;}
+  .canvas-empty{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--sub);font-size:14px;text-align:center;padding:20px;}
+  .canvas-empty .ce-icon{font-size:46px;opacity:.45;line-height:1;}
+  .canvas-empty .ce-btn{margin-top:2px;}
   #srcPanel table.data{min-width:100%;width:100%;table-layout:auto;}
   #srcPanel table.data th,#srcPanel table.data td{white-space:nowrap;padding:6px 10px;}
   #srcPanel table.data input[type=number]{width:110px;}
@@ -350,9 +365,9 @@
   <div class="app-layout">
     <aside class="sidebar">
       <div class="sb-brand">通用数据看板</div>
-      <div class="sb-block" id="sbSecBlock" style="display:none"><div class="sb-title">板块管理</div><div class="sb-item" onclick="openSections()">板块与密码管理</div></div>
-      <div class="sb-block"><div class="sb-title">看板</div><div id="sbDashList"></div><div class="sb-add" onclick="addDashboard()">+ 新建看板</div></div>
-      <div class="sb-block"><div class="sb-title">数据源</div><div id="sbSrcList"></div><div class="sb-add" onclick="openSources()">+ 新建数据源</div></div>
+      <div class="sb-block" id="sbSecBlock" style="display:none"><div class="sb-title">🗂 板块管理</div><div class="sb-item" onclick="openSections()">板块与密码管理</div></div>
+      <div class="sb-block"><div class="sb-title">📊 看板</div><div id="sbDashList"></div><div class="sb-add" onclick="addDashboard()">+ 新建看板</div></div>
+      <div class="sb-block"><div class="sb-title">🗄 数据源</div><div id="sbSrcList"></div><div class="sb-add" onclick="openSources()">+ 新建数据源</div></div>
       <div class="sb-foot"><button class="btn ghost" style="width:100%" onclick="logout()">退出登录</button></div>
     </aside>
     <div class="main">
@@ -365,12 +380,15 @@
     <div class="toolbar">
       <button class="btn" onclick="openWidgets()">组件管理</button>
       <button class="btn primary" onclick="addWidgetMenu()">+ 添加组件</button>
+      <span class="tb-sep"></span>
       <button class="btn" onclick="openDashSettings()">看板设置</button>
       <button class="btn" onclick="toggleFilterBar()">筛选</button>
       <button class="btn" onclick="toggleTheme()">主题</button>
+      <span class="tb-sep"></span>
       <button class="btn" onclick="exportImage()">导出图片</button>
       <button class="btn ghost" onclick="exportJSON()">导出配置</button>
       <button class="btn ghost" onclick="importJSON()">导入配置</button>
+      <span class="tb-sep"></span>
       <button class="btn ghost" onclick="loadExample()">载入示例</button>
       <button class="btn ghost" onclick="resolveOverlaps()">整理布局</button>
       <button class="btn ghost" onclick="resetAll()">重置</button>
@@ -565,14 +583,14 @@ function render(){
   disposeCharts();
   const dash=currentDash();
   renderSidebar();
-  applyTheme(state.theme||"light"); applyBg(); document.getElementById("appTitle").textContent=state.title||"通用数据看板";
-  document.getElementById("appSub").textContent=(dash?dash.name:"")+(state.sub?" · "+state.sub:"");
+  applyTheme(state.theme||"light"); applyBg(); document.getElementById("appTitle").textContent=(dash?dash.name:"通用数据看板");
+  document.getElementById("appSub").textContent=(state.sub?state.sub:(state.title||"通用数据看板"));
   renderTabs();
   const canvas=document.getElementById("canvas");
   canvas.classList.toggle("grid-on", !!state.showGrid);
   if(state.showGrid) canvas.style.backgroundSize=(state.gridSize||20)+"px "+(state.gridSize||20)+"px";
   const widgets=dash?dash.widgets:[];
-  if(!widgets.length){ canvas.style.height="420px"; canvas.innerHTML='<div class="canvas-empty">当前看板暂无组件，点击右上角「+ 添加组件」开始搭建。</div>'; return; }
+  if(!widgets.length){ canvas.style.height="420px"; canvas.innerHTML='<div class="canvas-empty"><div class="ce-icon">📊</div><div>当前看板暂无组件</div><button class="btn primary ce-btn" onclick="addWidgetMenu()">+ 添加组件</button></div>'; return; }
   canvas.innerHTML=widgets.map(w=>{
     const _st=(w.config&&w.config.style)||{};
     let _mstl=`left:${w.x}px;top:${w.y}px;width:${w.w}px;height:${w.h}px`;
