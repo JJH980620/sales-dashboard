@@ -34,6 +34,10 @@
   .sb-item.active{background:#e8f0fe;color:#1e3a8a;font-weight:600;}
   .sb-add{padding:6px 9px;font-size:12px;color:#3b6fe0;cursor:pointer;}
   .sb-add:hover{background:#f2f6fb;border-radius:8px;}
+  .sb-item{display:flex;align-items:center;gap:6px;}
+  .sb-sname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sb-del{color:var(--red);font-size:11px;cursor:pointer;flex-shrink:0;opacity:0;transition:.15s;font-weight:400;}
+  .sb-item:hover .sb-del{opacity:1;}
   .sb-foot{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;}
   .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 14px rgba(30,50,80,.08);}
   .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
@@ -409,7 +413,7 @@
       <div class="sb-brand">通用数据看板</div>
       <div class="sb-block" id="sbSecBlock" style="display:none"><div class="sb-title">🗂 板块管理</div><div class="sb-item" onclick="openSections()">板块与密码管理</div></div>
       <div class="sb-block"><div class="sb-title">📊 看板</div><div id="sbDashList"></div><div class="sb-add" onclick="addDashboard()">+ 新建看板</div></div>
-      <div class="sb-block"><div class="sb-title">🗄 数据源</div><div id="sbSrcList"></div><div class="sb-add" onclick="openSources()">+ 新建数据源</div></div>
+      <div class="sb-block"><div class="sb-title">🗄 数据源</div><div id="sbSrcList"></div><div class="sb-add" onclick="addSrcSide()">+ 新建数据源</div></div>
       <div class="sb-foot"><button class="btn ghost" style="width:100%" onclick="logout()">退出登录</button></div>
     </aside>
     <div class="main">
@@ -458,7 +462,7 @@
 
     <div id="srcPanel" class="panel hidden">
       <div class="panel-head"><h3>数据源管理</h3><span class="x" onclick="showView('canvas')">&times;</span></div>
-      <div class="split"><div class="sidelist"><div class="f-label">数据源列表</div><div id="srcList"></div><button class="btn sm" onclick="addSource()">+ 新建数据源</button></div><div id="srcEditor"></div></div>
+      <div id="srcEditor"></div>
       <div class="panel-foot"><button class="btn" onclick="showView('canvas')">返回看板</button><button class="btn primary" onclick="saveSources()">保存全部</button></div>
     </div>
 
@@ -1180,7 +1184,7 @@ function openWidgets(){ showModal("widgetModal"); const dash=currentDash(); docu
 
 let srcDraft=null,curSrcId=null;
 function openSources(){ showSrcPanel(); }
-function renderSrcList(){ document.getElementById("srcList").innerHTML=srcDraft.map(s=>`<div class="sl-item ${s.id===curSrcId?"active":""}" onclick="selectSrc('${s.id}')"><span>${esc(s.name)}</span><span class="d" onclick="event.stopPropagation();delSource('${s.id}')">删除</span></div>`).join(""); }
+function renderSrcList(){ const el=document.getElementById("srcList"); if(!el) return; el.innerHTML=srcDraft.map(s=>`<div class="sl-item ${s.id===curSrcId?"active":""}" onclick="selectSrc('${s.id}')"><span>${esc(s.name)}</span><span class="d" onclick="event.stopPropagation();delSource('${s.id}')">删除</span></div>`).join(""); }
 function selectSrc(id){ curSrcId=id; renderSrcList(); renderSrcEditor(); }
 function addSource(){ const s={id:uid("s"),name:"数据源"+(srcDraft.length+1),fields:[],rows:[]}; srcDraft.push(s); curSrcId=s.id; renderSrcList(); renderSrcEditor(); }
 function delSource(id){ srcDraft=srcDraft.filter(s=>s.id!==id); curSrcId=srcDraft.length?srcDraft[0].id:null; renderSrcList(); renderSrcEditor(); }
@@ -1218,11 +1222,12 @@ function applyFreeze(){
   let acc=0;
   table.querySelectorAll('thead th').forEach(th=>{ th.style.left=''; });
   table.querySelectorAll('thead th').forEach(th=>{
-    if(th.classList.contains('rowno')||th.classList.contains('fz')){ th.style.position='sticky'; th.style.left=acc+'px'; acc+=th.offsetWidth; }
+    if(th.classList.contains('rowno')||th.classList.contains('fz')){ th.style.position='sticky'; th.style.left=acc+'px'; th.style.zIndex='4'; acc+=th.offsetWidth; }
+    else th.style.zIndex='2';
   });
   table.querySelectorAll('tbody tr').forEach(tr=>{
     let a=0;
-    tr.querySelectorAll('td').forEach(td=>{ td.style.left=''; if(td.classList.contains('rowno')||td.classList.contains('fz')){ td.style.position='sticky'; td.style.left=a+'px'; a+=td.offsetWidth; } });
+    tr.querySelectorAll('td').forEach(td=>{ td.style.left=''; if(td.classList.contains('rowno')||td.classList.contains('fz')){ td.style.position='sticky'; td.style.left=a+'px'; td.style.zIndex='1'; a+=td.offsetWidth; } else td.style.zIndex='0'; });
   });
 }
 function startColResize(e,ci){
@@ -1327,9 +1332,26 @@ function renderSidebar(){
   const dl=document.getElementById("sbDashList");
   if(dl) dl.innerHTML=state.dashboards.map(d=>`<div class="sb-item ${d.id===state.currentId?"active":""}" onclick="switchDashboard('${d.id}');showView('canvas')"><span>${esc(d.name)}</span></div>`).join("");
   const sl=document.getElementById("sbSrcList");
-  if(sl) sl.innerHTML=state.sources.map(s=>`<div class="sb-item" onclick="openSourceEdit('${s.id}')"><span>${esc(s.name)}</span></div>`).join("");
+  if(sl) sl.innerHTML=state.sources.map(s=>`<div class="sb-item ${s.id===curSrcId?"active":""}" onclick="openSourceEdit('${s.id}')"><span class="sb-sname">${esc(s.name)}</span><span class="sb-del" onclick="event.stopPropagation();delSrcSide('${s.id}')" title="删除数据源">删除</span></div>`).join("");
   const sb=document.getElementById("sbSecBlock");
   if(sb) sb.style.display=(curRole==="admin")?"":"none";
+}
+function addSrcSide(){
+  const s={id:uid("s"),name:"数据源"+(state.sources.length+1),fields:[],rows:[]};
+  state.sources.push(s); saveState(); renderSidebar();
+  openSourceEdit(s.id);
+}
+function delSrcSide(id){
+  state.sources=state.sources.filter(s=>s.id!==id); saveState();
+  const panelOpen=!document.getElementById("srcPanel").classList.contains("hidden");
+  if(panelOpen&&Array.isArray(srcDraft)) srcDraft=srcDraft.filter(s=>s.id!==id);
+  if(curSrcId===id){
+    if(panelOpen&&srcDraft&&srcDraft.length) curSrcId=srcDraft[0].id;
+    else if(state.sources.length) curSrcId=state.sources[0].id;
+    else curSrcId=null;
+  }
+  renderSidebar();
+  if(panelOpen) renderSrcEditor();
 }
 function openSourceEdit(id){ showSrcPanel(); selectSrc(id); }
 function closeModal(id){ document.getElementById(id).classList.add("hidden"); }
