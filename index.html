@@ -15,6 +15,30 @@
   .page{max-width:1240px;margin:0 auto;}
   .login-overlay{position:fixed;inset:0;z-index:120;background:linear-gradient(135deg,#1e3a8a,#0f766e);display:flex;align-items:center;justify-content:center;}
   .login-overlay.hidden{display:none;}
+  .app-layout{display:flex;gap:16px;align-items:flex-start;min-height:calc(100vh - 44px);}
+  .sidebar{width:208px;flex-shrink:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;position:sticky;top:16px;box-shadow:0 2px 12px rgba(30,50,80,.06);max-height:calc(100vh - 40px);overflow:auto;}
+  .main{flex:1;min-width:0;}
+  .sb-brand{font-weight:800;font-size:15px;color:#1e3a8a;padding:4px 8px 14px;border-bottom:1px solid var(--line);margin-bottom:10px;}
+  .sb-block{margin-bottom:12px;}
+  .sb-title{font-size:11px;color:var(--sub);font-weight:700;letter-spacing:.4px;padding:4px 8px;}
+  .sb-item{padding:7px 9px;border-radius:8px;cursor:pointer;font-size:13px;color:var(--ink);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .sb-item:hover{background:#f2f6fb;}
+  .sb-item.active{background:#e8f0fe;color:#1e3a8a;font-weight:600;}
+  .sb-add{padding:6px 9px;font-size:12px;color:#3b6fe0;cursor:pointer;}
+  .sb-add:hover{background:#f2f6fb;border-radius:8px;}
+  .sb-foot{margin-top:12px;border-top:1px solid var(--line);padding-top:10px;}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 2px 14px rgba(30,50,80,.08);}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .panel-head h3{font-size:16px;font-weight:700;}
+  .panel-head .x{cursor:pointer;font-size:22px;color:var(--sub);line-height:1;}
+  .panel-foot{margin-top:16px;display:flex;justify-content:flex-end;gap:8px;}
+  .tabs-wrap{display:none;}
+  #srcPanel table.data{min-width:100%;width:100%;table-layout:auto;}
+  #srcPanel table.data th,#srcPanel table.data td{white-space:nowrap;padding:6px 10px;}
+  #srcPanel table.data input[type=number]{width:110px;}
+  #srcPanel .split{display:flex;gap:16px;align-items:flex-start;}
+  #srcPanel .sidelist{width:220px;flex-shrink:0;}
+  body.dark .sidebar,body.dark .panel{background:#1a2233;}
   .login-card{background:#fff;border-radius:20px;padding:40px 34px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;}
   .login-logo{font-size:22px;font-weight:800;color:#1e3a8a;margin-bottom:6px;}
   .login-sub{font-size:13px;color:#667;margin-bottom:22px;line-height:1.5;}
@@ -323,6 +347,15 @@
   </div>
 
   <div class="page">
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sb-brand">通用数据看板</div>
+      <div class="sb-block" id="sbSecBlock" style="display:none"><div class="sb-title">板块管理</div><div class="sb-item" onclick="openSections()">板块与密码管理</div></div>
+      <div class="sb-block"><div class="sb-title">看板</div><div id="sbDashList"></div><div class="sb-add" onclick="addDashboard()">+ 新建看板</div></div>
+      <div class="sb-block"><div class="sb-title">数据源</div><div id="sbSrcList"></div><div class="sb-add" onclick="openSources()">+ 新建数据源</div></div>
+      <div class="sb-foot"><button class="btn ghost" style="width:100%" onclick="logout()">退出登录</button></div>
+    </aside>
+    <div class="main">
 
   <div class="header">
     <div>
@@ -330,7 +363,6 @@
       <div class="sub" id="appSub"></div>
     </div>
     <div class="toolbar">
-      <button class="btn" onclick="openSources()">数据源管理</button>
       <button class="btn" onclick="openWidgets()">组件管理</button>
       <button class="btn primary" onclick="addWidgetMenu()">+ 添加组件</button>
       <button class="btn" onclick="openDashSettings()">看板设置</button>
@@ -342,8 +374,6 @@
       <button class="btn ghost" onclick="loadExample()">载入示例</button>
       <button class="btn ghost" onclick="resolveOverlaps()">整理布局</button>
       <button class="btn ghost" onclick="resetAll()">重置</button>
-      <button class="btn ghost" id="secBtn" onclick="openSections()" style="display:none">板块管理</button>
-      <button class="btn ghost" onclick="logout()">退出登录</button>
     </div>
   </div>
 
@@ -366,20 +396,30 @@
 
   <div id="canvas"></div>
 
+    <div id="srcPanel" class="panel hidden">
+      <div class="panel-head"><h3>数据源管理</h3><span class="x" onclick="showView('canvas')">&times;</span></div>
+      <div class="split"><div class="sidelist"><div class="f-label">数据源列表</div><div id="srcList"></div><button class="btn sm" onclick="addSource()">+ 新建数据源</button></div><div id="srcEditor"></div></div>
+      <div class="panel-foot"><button class="btn" onclick="showView('canvas')">返回看板</button><button class="btn primary" onclick="saveSources()">保存全部</button></div>
+    </div>
+
+    <div id="secPanel" class="panel hidden">
+      <div class="panel-head"><h3>板块与密码管理（管理员）</h3><span class="x" onclick="showView('canvas')">&times;</span></div>
+      <div class="f-label">现有板块（各自密码登录进入）</div>
+      <div id="secList"></div>
+      <div class="f-label" style="margin-top:14px">新增板块</div>
+      <div class="cfg-row"><input id="newSecPwd" placeholder="新密码（如 123456）" style="width:160px"><input id="newSecName" placeholder="板块名称（如 财务看板）" style="flex:1"><button class="btn sm" onclick="addSection()">+ 新增</button></div>
+      <div class="sec-hint">每个密码登录后进入独立板块，数据相互隔离。管理员（980620）可进入编辑任意板块、重置为示例或删除。普通密码只能访问自己的板块。</div>
+      <div class="panel-foot"><button class="btn primary" onclick="showView('canvas')">完成</button></div>
+    </div>
+
+    </div><!-- /main -->
+  </div><!-- /app-layout -->
 </div>
 
 <div class="modal-mask hidden" id="typeModal">
   <div class="modal" style="max-width:720px">
     <div class="modal-head"><h3>选择组件类型</h3><span class="x" onclick="closeModal('typeModal')">&times;</span></div>
     <div class="modal-body" id="typeList" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;"></div>
-  </div>
-</div>
-
-<div class="modal-mask hidden" id="srcModal">
-  <div class="modal">
-    <div class="modal-head"><h3>数据源管理（全局共享）</h3><span class="x" onclick="closeModal('srcModal')">&times;</span></div>
-    <div class="modal-body"><div class="split"><div class="sidelist"><div class="f-label">数据源列表</div><div id="srcList"></div><button class="btn sm" onclick="addSource()">+ 新建数据源</button></div><div id="srcEditor"></div></div></div>
-    <div class="modal-foot"><button class="btn" onclick="closeModal('srcModal')">取消</button><button class="btn primary" onclick="saveSources()">保存全部</button></div>
   </div>
 </div>
 
@@ -419,20 +459,6 @@
       <div class="cfg-row"><select id="dsExportScale"><option value="1">1x 标准</option><option value="2">2x 高清</option><option value="3">3x 超清</option></select><span style="font-size:11px;color:var(--sub)">倍率越高，导出越清晰</span></div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal('dashSetModal')">取消</button><button class="btn primary" onclick="saveDashSettings()">保存</button></div>
-  </div>
-</div>
-
-<div class="modal-mask hidden" id="secModal">
-  <div class="modal" style="max-width:720px">
-    <div class="modal-head"><h3>板块与密码管理（管理员）</h3><span class="x" onclick="closeModal('secModal')">&times;</span></div>
-    <div class="modal-body">
-      <div class="f-label">现有板块（各自密码登录进入）</div>
-      <div id="secList"></div>
-      <div class="f-label" style="margin-top:14px">新增板块</div>
-      <div class="cfg-row"><input id="newSecPwd" placeholder="新密码（如 123456）" style="width:160px"><input id="newSecName" placeholder="板块名称（如 财务看板）" style="flex:1"><button class="btn sm" onclick="addSection()">+ 新增</button></div>
-      <div class="sec-hint">每个密码登录后进入独立板块，数据相互隔离。管理员（980620）可进入编辑任意板块、重置为示例或删除。普通密码只能访问自己的板块。</div>
-    </div>
-    <div class="modal-foot"><button class="btn primary" onclick="closeModal('secModal')">完成</button></div>
   </div>
 </div>
 
@@ -538,6 +564,7 @@ function openDashMenu(e,id){ document.querySelectorAll(".menu").forEach(m=>m.rem
 function render(){
   disposeCharts();
   const dash=currentDash();
+  renderSidebar();
   applyTheme(state.theme||"light"); applyBg(); document.getElementById("appTitle").textContent=state.title||"通用数据看板";
   document.getElementById("appSub").textContent=(dash?dash.name:"")+(state.sub?" · "+state.sub:"");
   renderTabs();
@@ -1092,7 +1119,7 @@ function saveDashSettings(){
 function openWidgets(){ showModal("widgetModal"); const dash=currentDash(); document.getElementById("widgetList").innerHTML=dash.widgets.map(w=>`<div class="cfg-item"><div class="cfg-head"><span>${esc(w.name)} <span style="color:var(--sub);font-weight:400">(${TYPE_LABEL[w.type]||w.type})</span></span><span style="display:flex;gap:8px"><span class="c-del" onclick="moveWidget('${w.id}',-1)">上移</span><span class="c-del" onclick="moveWidget('${w.id}',1)">下移</span><span class="c-del" onclick="toggleWidgetVis('${w.id}');openWidgets()">${w.hidden?'显示':'隐藏'}</span><span class="c-del" onclick="editWidget('${w.id}')">配置</span><span class="c-del" onclick="delWidget('${w.id}')">删除</span></span></div><div style="font-size:12px;color:var(--sub)${w.hidden?';opacity:.5':''}">数据源：${esc(getSource(w.sourceId)?getSource(w.sourceId).name:"(未绑定)")} · 位置 (${w.x},${w.y}) · ${w.w}×${w.h}</div></div>`).join("")||'<div class="empty">当前看板暂无组件。</div>'; }
 
 let srcDraft=null,curSrcId=null;
-function openSources(){ srcDraft=JSON.parse(JSON.stringify(state.sources)); curSrcId=srcDraft.length?srcDraft[0].id:null; renderSrcList(); renderSrcEditor(); showModal("srcModal"); }
+function openSources(){ showSrcPanel(); }
 function renderSrcList(){ document.getElementById("srcList").innerHTML=srcDraft.map(s=>`<div class="sl-item ${s.id===curSrcId?"active":""}" onclick="selectSrc('${s.id}')"><span>${esc(s.name)}</span><span class="d" onclick="event.stopPropagation();delSource('${s.id}')">删除</span></div>`).join(""); }
 function selectSrc(id){ curSrcId=id; renderSrcList(); renderSrcEditor(); }
 function addSource(){ const s={id:uid("s"),name:"数据源"+(srcDraft.length+1),fields:[],rows:[]}; srcDraft.push(s); curSrcId=s.id; renderSrcList(); renderSrcEditor(); }
@@ -1131,7 +1158,7 @@ function addField(){ const s=curSrc(); s.fields.push({id:uid("f"),name:"新字�
 function delField(i){ const s=curSrc(); const fid=s.fields[i].id; s.fields.splice(i,1); s.rows.forEach(r=>delete r[fid]); renderSrcEditor(); }
 function addRow(){ const s=curSrc(); const r={}; s.fields.forEach(f=>r[f.id]=""); s.rows.push(r); renderSrcEditor(); }
 function delRow(i){ curSrc().rows.splice(i,1); renderSrcEditor(); }
-function saveSources(){ state.sources=srcDraft; saveState(); closeModal("srcModal"); render(); toast("数据源已保存"); }
+function saveSources(){ state.sources=srcDraft; saveState(); showView("canvas"); render(); toast("数据源已保存"); }
 function importToSource(id){ const inp=document.createElement("input"); inp.type="file"; inp.accept=".xlsx,.xls,.csv,.tsv"; inp.onchange=()=>{ const file=inp.files[0]; if(!file)return; const reader=new FileReader(); reader.onload=e=>{ const data=new Uint8Array(e.target.result); let rows; if(typeof XLSX!=="undefined"){ const wb=XLSX.read(data,{type:"array"}); const ws=wb.Sheets[wb.SheetNames[0]]; rows=XLSX.utils.sheet_to_json(ws,{defval:""}); } else { toast("Excel 解析库未加载（需联网），请使用粘贴方式"); return; } applyImportRows(id,rows); }; reader.readAsArrayBuffer(file); }; inp.click(); }
 function applyImportRows(id,rows){ const s=srcDraft.find(x=>x.id===id); if(!rows||!rows.length){toast("数据为空");return;} const head=Object.keys(rows[0]); const colVals={}; head.forEach(h=>colVals[h]=rows.map(o=>o[h])); const fidMap={}; head.forEach(h=>{ let f=s.fields.find(x=>x.name===h); if(!f){f={id:uid("f"),name:h,type:inferType(h,colVals[h])};s.fields.push(f);} fidMap[h]=f.id; }); s.rows=rows.map(o=>{ const r={}; head.forEach(h=>{r[fidMap[h]]=o[h];}); return r; }); renderSrcEditor(); const t=s.fields.filter(f=>head.includes(f.name)).map(f=>f.type); toast("已导入 "+rows.length+" 行，自动识别字段："+t.join("/")); }
 function pasteToSource(id){ const txt=prompt("粘贴 CSV/TSV 数据（首行为字段名）:"); if(!txt)return; const delim=txt.includes("\t")?"\t":","; const lines=txt.split(/\r?\n/).filter(l=>l.trim()!==""); if(lines.length<2){toast("数据不足");return;} const head=lines[0].split(delim).map(h=>h.trim()); const rows=lines.slice(1).map(l=>{ const c=l.split(delim); const o={}; head.forEach((h,j)=>{ let v=c[j]?.trim()??""; const n=Number(v); o[h]=(v!==""&&!isNaN(n)&&/^[-\d.]+$/.test(v))?n:v; }); return o; }); applyImportRows(id,rows); }
@@ -1139,6 +1166,28 @@ function pasteToSource(id){ const txt=prompt("粘贴 CSV/TSV 数据（首行为�
 function loadExample(){ state=buildExample(); saveState(); render(); toast("已载入示例"); }
 function resetAll(){ if(!confirm("确定恢复为示例并清空当前配置吗？"))return; state=buildExample(); saveState(); render(); toast("已重置"); }
 function showModal(id){ document.getElementById(id).classList.remove("hidden"); }
+function showView(v){
+  const canvas=document.getElementById("canvas");
+  const sp=document.getElementById("srcPanel");
+  const ep=document.getElementById("secPanel");
+  if(canvas) canvas.style.display=(v==="canvas")?"":"none";
+  if(sp) sp.classList.toggle("hidden", v!=="src");
+  if(ep) ep.classList.toggle("hidden", v!=="sec");
+}
+function showSrcPanel(){
+  srcDraft=JSON.parse(JSON.stringify(state.sources));
+  curSrcId=srcDraft.length?srcDraft[0].id:null;
+  renderSrcList(); renderSrcEditor(); showView("src"); renderSidebar();
+}
+function renderSidebar(){
+  const dl=document.getElementById("sbDashList");
+  if(dl) dl.innerHTML=state.dashboards.map(d=>`<div class="sb-item ${d.id===state.currentId?"active":""}" onclick="switchDashboard('${d.id}');showView('canvas')"><span>${esc(d.name)}</span></div>`).join("");
+  const sl=document.getElementById("sbSrcList");
+  if(sl) sl.innerHTML=state.sources.map(s=>`<div class="sb-item" onclick="openSourceEdit('${s.id}')"><span>${esc(s.name)}</span></div>`).join("");
+  const sb=document.getElementById("sbSecBlock");
+  if(sb) sb.style.display=(curRole==="admin")?"":"none";
+}
+function openSourceEdit(id){ showSrcPanel(); selectSrc(id); }
 function closeModal(id){ document.getElementById(id).classList.add("hidden"); }
 
 
@@ -1360,6 +1409,7 @@ function initLogin(){
   else if(remember && AUTH.sections.some(s=>s.pwd===remember)){ curPwd=remember; curRole="user"; ok=true; }
   state=migrate(loadState());
   applyRoleUI();
+  renderSidebar();
   const ov=document.getElementById("loginOverlay");
   if(ov) ov.classList.toggle("hidden", !!ok);
 }
@@ -1393,7 +1443,7 @@ function applyRoleUI(){
   if(b) b.style.display=(curRole==="admin")?"":"none";
 }
 /* 板块管理（管理员） */
-function openSections(){ renderSections(); showModal("secModal"); }
+function openSections(){ renderSections(); showView("sec"); renderSidebar(); }
 function renderSections(){
   const list=document.getElementById("secList");
   if(!list) return;
@@ -1418,7 +1468,7 @@ function delSection(p){
 }
 function editSection(p){
   enterSession({pwd:p, role:"admin"});
-  closeModal("secModal");
+  showView("canvas");
   toast("已进入编辑板块："+p);
 }
 function resetSection(p){
