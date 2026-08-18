@@ -74,6 +74,17 @@
   .ctx-menu .cm-item.danger:hover{background:#fdecec;}
   .ctx-menu .cm-sep{height:1px;background:var(--line);margin:5px 8px;}
   .ctx-menu .cm-ico{width:16px;text-align:center;color:var(--sub);}
+  .ctx-menu .cm-title{font-size:11px;color:var(--sub);font-weight:700;padding:6px 12px 2px;letter-spacing:.4px;}
+  .ctx-menu .cm-item.sel{background:#e8f0fe;color:#1e3a8a;font-weight:600;}
+  #srcEditor .th-name{cursor:pointer;border-radius:4px;padding:0 2px;}
+  #srcEditor .th-name:hover{background:#e8f0fe;color:#1e3a8a;}
+  #srcEditor .th-add{cursor:pointer;color:#3b6fe0;font-size:16px;text-align:center;width:34px;}
+  #srcEditor .th-add:hover{background:#e8f0fe;}
+  #srcEditor table.data td.rowno,#srcEditor table.data th.rowno{background:#f6f9fc;}
+  #srcEditor table.data td.fz{background:#fff;box-shadow:1px 0 0 var(--line);}
+  #srcEditor table.data th.fz{background:#f3f6fb;box-shadow:1px 0 0 var(--line);}
+  #srcEditor table.data tr.sel td.fz{background:#eaf1ff;}
+  #srcEditor table.data tr.sel td.rowno{background:#eaf1ff;}
   /* 滚动优化：避免滚动链式触发与重排，启用触摸惯性 */
   .main,.sidebar,#srcEditor .data-wrap{overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
   #srcEditor table.data thead th{will-change:top;}
@@ -1196,14 +1207,41 @@ function showRowMenu(e,ri){
 }
 
 
+let freezeCols=1;
+function setFreeze(v){ freezeCols=Math.max(0,parseInt(v)||0); renderSrcEditor(); }
+function applyFreeze(){
+  const table=document.querySelector('#srcEditor table.data');
+  if(!table) return;
+  let acc=0;
+  table.querySelectorAll('thead th').forEach(th=>{ th.style.left=''; });
+  table.querySelectorAll('thead th').forEach(th=>{
+    if(th.classList.contains('rowno')||th.classList.contains('fz')){ th.style.position='sticky'; th.style.left=acc+'px'; acc+=th.offsetWidth; }
+  });
+  table.querySelectorAll('tbody tr').forEach(tr=>{
+    let a=0;
+    tr.querySelectorAll('td').forEach(td=>{ td.style.left=''; if(td.classList.contains('rowno')||td.classList.contains('fz')){ td.style.position='sticky'; td.style.left=a+'px'; a+=td.offsetWidth; } });
+  });
+}
+function renameField(i){ const f=curSrc().fields[i]; const v=prompt("字段名：",f.name); if(v&&v.trim()){f.name=v.trim();renderSrcEditor();} }
+function setFieldType(i,t){ curSrc().fields[i].type=t; renderSrcEditor(); }
+function setFieldOptions(i){ const f=curSrc().fields[i]; if(f.type!=="single"&&f.type!=="multi"){toast("仅单选/多选字段可设置选项");return;} const v=prompt("选项（逗号分隔）：",f.options||""); if(v!=null){f.options=v;renderSrcEditor();} }
+function insertFieldAt(i,side){ const s=curSrc(); const nf={id:uid("f"),name:"新字段",type:"text"}; s.fields.splice(i+(side?1:0),0,nf); s.rows.forEach(r=>r[nf.id]=""); renderSrcEditor(); }
+function showHeaderMenu(e,i){
+  e.preventDefault(); e.stopPropagation(); closeCtxMenu();
+  const f=curSrc().fields[i];
+  const menu=document.createElement("div"); menu.className="ctx-menu";
+  menu.innerHTML=`<div class="cm-item" onclick="renameField(${i});closeCtxMenu()"><span class="cm-ico">\u270f</span>重命名字段</div><div class="cm-sep"></div><div class="cm-title">字段类型</div>${FIELD_TYPES.map(ft=>`<div class="cm-item ${f.type===ft[0]?"sel":""}" onclick="setFieldType(${i},'${ft[0]}');closeCtxMenu()">${ft[1]}</div>`).join("")}<div class="cm-sep"></div><div class="cm-item" onclick="setFieldOptions(${i});closeCtxMenu()"><span class="cm-ico">\u2699</span>设置选项（单选/多选）</div><div class="cm-sep"></div><div class="cm-item" onclick="insertFieldAt(${i},0);closeCtxMenu()">\u2b95 左侧插入字段</div><div class="cm-item" onclick="insertFieldAt(${i},1);closeCtxMenu()">\u27a1 右侧插入字段</div><div class="cm-item danger" onclick="delField(${i});closeCtxMenu()">\ud83d\uddd1 删除字段</div>`;
+  document.body.appendChild(menu);
+  const mw=menu.offsetWidth,mh=menu.offsetHeight;
+  menu.style.left=Math.min(e.clientX,window.innerWidth-mw-10)+"px";
+  menu.style.top=Math.min(e.clientY,window.innerHeight-mh-10)+"px";
+  setTimeout(()=>document.addEventListener("click",function h(){closeCtxMenu();document.removeEventListener("click",h);}),0);
+}
+
 function renderSrcEditor(){
   const box=document.getElementById("srcEditor"),s=curSrc();
   if(!s){box.innerHTML='<div class="empty">请选择或新建数据源。</div>';return;}
   const typeLbl=t=>{const o=FIELD_TYPES.find(x=>x[0]===t);return o?o[1]:t;};
-  const fieldsHtml=s.fields.map((f,i)=>{
-    const optField=(f.type==="single"||f.type==="multi")?`<input data-fi="${i}" data-k="options" value="${esc(f.options||"")}" placeholder="选项，逗号分隔" style="width:180px" class="field-opt">`:'';
-    return `<div class="field-row"><input data-fi="${i}" data-k="name" value="${esc(f.name)}" placeholder="字段名" style="width:150px"><select data-fi="${i}" data-k="type" onchange="renderSrcEditor()">${FIELD_TYPES.map(ft=>`<option value="${ft[0]}" ${f.type===ft[0]?"selected":""}>${ft[1]}</option>`).join("")}</select>${optField}<span class="field-typetag">${typeLbl(f.type)}</span><span class="fd" onclick="delField(${i})">删除</span></div>`;
-  }).join("");
   const cols=s.fields;
   const cellCtrl=(f,ri,r)=>{
     const v=r[f.id]===undefined?"":r[f.id];
@@ -1215,16 +1253,17 @@ function renderSrcEditor(){
     return `<input ${d} value="${esc(v)}">`;
   };
   const allSel=s.rows.length>0&&srcSelRows.length===s.rows.length;
-  const tableHtml=cols.length?`<div class="data-wrap"><table class="data"><thead><tr><th class="rowno"><input type="checkbox" onchange="toggleSrcAll(this)" ${allSel?"checked":""} title="全选"></th><th class="rowno">#</th>${cols.map(f=>`<th>${esc(f.name)}<span class="th-type">${typeLbl(f.type)}</span></th>`).join("")}<th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}" class="${srcSelRows.includes(ri)?"sel":""}" oncontextmenu="showRowMenu(event,${ri})"><td class="rowno"><input type="checkbox" ${srcSelRows.includes(ri)?"checked":""} onchange="toggleSrcRow(${ri})"></td><td class="rowno">${ri+1}</td>${cols.map(f=>`<td>${cellCtrl(f,ri,r)}</td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">该数据源暂无字段，请先添加字段模板。</div>';
-  box.innerHTML=`<div class="f-label">数据源名称</div><div class="cfg-row"><input id="srcName" value="${esc(s.name)}" style="width:220px"></div><div class="f-label">字段模板（自定义结构）</div><div id="fieldList">${fieldsHtml}</div><button class="btn sm" onclick="addField()">+ 添加字段</button><div class="f-label">数据记录</div><div class="src-ops"><span class="src-selinfo" id="srcSelInfo">已选 ${srcSelRows.length} 行</span><button class="btn sm" onclick="srcCopySel()">复制</button><button class="btn sm" onclick="srcCutSel()">剪切</button><button class="btn sm" onclick="srcPaste()">粘贴</button><button class="btn sm" onclick="srcInsertRows(-1)">上方插入</button><button class="btn sm" onclick="srcInsertRows(1)">下方插入</button><button class="btn sm" onclick="srcClearSel()">清除内容</button><button class="btn sm danger" onclick="srcDelSel()">删除选中</button></div>${tableHtml}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn sm" onclick="addRow()">+ 新增行</button><button class="btn sm" onclick="importToSource('${s.id}')">导入 Excel/CSV</button><button class="btn sm" onclick="pasteToSource('${s.id}')">粘贴数据</button></div>`;
+  const fcl=(ci)=>ci<freezeCols?"fz":"";
+  const tableHtml=cols.length?`<div class="data-wrap"><table class="data"><thead><tr><th class="rowno"><input type="checkbox" onchange="toggleSrcAll(this)" ${allSel?"checked":""} title="全选"></th><th class="rowno">#</th>${cols.map((f,ci)=>`<th class="fcol ${fcl(ci)}" oncontextmenu="showHeaderMenu(event,${ci})"><span class="th-name" onclick="renameField(${ci})" title="点击重命名">${esc(f.name)}</span><span class="th-type">${typeLbl(f.type)}</span></th>`).join("")}<th class="th-add" onclick="addField()" title="添加字段">\uff0b</th><th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}" class="${srcSelRows.includes(ri)?"sel":""}" oncontextmenu="showRowMenu(event,${ri})"><td class="rowno"><input type="checkbox" ${srcSelRows.includes(ri)?"checked":""} onchange="toggleSrcRow(${ri})"></td><td class="rowno">${ri+1}</td>${cols.map((f,ci)=>`<td class="${fcl(ci)}">${cellCtrl(f,ri,r)}</td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">该数据源暂无字段，请点击表头“＋”添加字段。</div>';
+  box.innerHTML=`<div class="f-label">数据源名称</div><div class="cfg-row"><input id="srcName" value="${esc(s.name)}" style="width:220px"></div><div class="f-label">数据记录</div><div class="src-ops"><span class="src-selinfo" id="srcSelInfo">已选 ${srcSelRows.length} 行</span><button class="btn sm" onclick="srcCopySel()">复制</button><button class="btn sm" onclick="srcCutSel()">剪切</button><button class="btn sm" onclick="srcPaste()">粘贴</button><button class="btn sm" onclick="srcInsertRows(-1)">上方插入</button><button class="btn sm" onclick="srcInsertRows(1)">下方插入</button><button class="btn sm" onclick="srcClearSel()">清除内容</button><button class="btn sm danger" onclick="srcDelSel()">删除选中</button><span class="tb-sep"></span><label style="font-size:12px;color:var(--sub)">冻结前</label><input id="freezeInput" type="number" min="0" max="${Math.max(0,cols.length)}" value="${freezeCols}" style="width:52px" onchange="setFreeze(this.value)"><label style="font-size:12px;color:var(--sub)">列</label></div><div style="font-size:11px;color:var(--sub);margin:4px 0 8px">右键表头可设置字段类型/重命名/插入/删除；点击字段名可直接重命名；右键行可操作</div>${tableHtml}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn sm" onclick="addRow()">+ 新增行</button><button class="btn sm" onclick="importToSource('${s.id}')">导入 Excel/CSV</button><button class="btn sm" onclick="pasteToSource('${s.id}')">粘贴数据</button></div>`;
   document.getElementById("srcName").addEventListener("input",e=>s.name=e.target.value);
-  document.querySelectorAll("#fieldList [data-fi]").forEach(el=>el.addEventListener("input",()=>{const f=s.fields[+el.dataset.fi];f[el.dataset.k]=el.value;}));
   document.querySelectorAll("#srcEditor table.data [data-r][data-f]").forEach(el=>{
     const ri=+el.dataset.r,fid=el.dataset.f;
     if(el.type==="checkbox"){ el.addEventListener("change",()=>{s.rows[ri][fid]=el.checked;}); }
     else if(el.tagName==="SELECT"){ el.addEventListener("change",()=>{s.rows[ri][fid]=el.value;}); }
     else { el.addEventListener("input",()=>{s.rows[ri][fid]=el.value;}); }
   });
+  applyFreeze();
 }
 function addField(){ const s=curSrc(); s.fields.push({id:uid("f"),name:"新字段",type:"text"}); renderSrcEditor(); }
 function delField(i){ const s=curSrc(); const fid=s.fields[i].id; s.fields.splice(i,1); s.rows.forEach(r=>delete r[fid]); renderSrcEditor(); }
