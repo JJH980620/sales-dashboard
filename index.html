@@ -493,8 +493,8 @@ function render(){
     if(_st.border) _mstl+=`;border:1px solid var(--line)`;
     return `
     <div class="module ${w.hidden?'hidden-w':''}" data-id="${w.id}" style="${_mstl}" ondblclick="editWidget('${w.id}')">
-      <div class="module-bar" title="拖拽移动">
-        <span class="m-title">${esc(w.name)}</span>
+      <div class="module-bar" title="拖拽移动" ${w.config.titleShow===false?'style="display:none"':''}>
+        <span class="m-title" style="${w.config.titleSize?('font-size:'+w.config.titleSize+'px;'):''}${w.config.titleColor?('color:'+(COLOR_HEX[w.config.titleColor]||w.config.titleColor)+';'):''}${w.config.titleAlign?('text-align:'+w.config.titleAlign+';'):''}">${esc(w.name)}</span>
         <span class="m-type">${TYPE_LABEL[w.type]||w.type}</span>
         <span class="m-actions">
           <span class="vis-btn" title="显示/隐藏" onclick="toggleWidgetVis('${w.id}')">${w.hidden?'&#128065;&#8205;&#8204;':'&#128065;'}</span>
@@ -764,8 +764,10 @@ function renderCfg(){
 function renderCommonStyle(){
   const st=wDraft.config.style||(wDraft.config.style={});
   const bg=st.bg||"";
-  const opts='<span class="bg-opt '+(bg===""?"sel":"")+'" data-v="" title="\u65e0" style="background:transparent;border:1px dashed var(--line)">\u2205</span>'+COLORS.map(cc=>'<span class="bg-opt '+(bg===cc?"sel":"")+'" data-v="'+cc+'" style="background:'+COLOR_HEX[cc]+'" title="'+cc+'"></span>').join('');
-  return `<div class="cfg-panel active" style="margin-top:10px"><div class="f-label">\u7ec4\u4ef6\u901a\u7528\u6837\u5f0f</div><div class="cfg-row"><label>\u80cc\u666f\u8272</label><span id="cmBgRow" class="bg-row">${opts}</span></div><div class="cfg-row"><label>\u5706\u89d2</label><input id="cmRadius" type="number" min="0" max="40" value="${st.radius!=null?st.radius:8}" style="width:70px"><span style="font-size:11px;color:var(--sub)">px</span><label style="display:flex;align-items:center;gap:4px;margin-left:10px"><input type="checkbox" id="cmShadow" ${st.shadow?"checked":""}>\u9634\u5f71</label><label style="display:flex;align-items:center;gap:4px;margin-left:10px"><input type="checkbox" id="cmBorder" ${st.border?"checked":""}>\u8fb9\u6846</label></div></div>`;
+  const tc=wDraft.config.titleColor||"";
+  const opts='<span class="bg-opt '+(bg===""?"sel":"")+'" data-v="" title="无" style="background:transparent;border:1px dashed var(--line)">∅</span>'+COLORS.map(cc=>'<span class="bg-opt '+(bg===cc?"sel":"")+'" data-v="'+cc+'" style="background:'+COLOR_HEX[cc]+'" title="'+cc+'"></span>').join('');
+  const tOpts='<span class="bg-opt '+(tc===""?"sel":"")+'" data-v="" title="无" style="background:transparent;border:1px dashed var(--line)">∅</span>'+COLORS.map(cc=>'<span class="bg-opt '+(tc===cc?"sel":"")+'" data-v="'+cc+'" style="background:'+COLOR_HEX[cc]+'" title="'+cc+'"></span>').join('');
+  return `<div class="cfg-panel active" style="margin-top:10px"><div class="f-label">标题</div><div class="cfg-row"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="cmShowTitle" ${wDraft.config.titleShow!==false?"checked":""}>显示标题</label><label style="display:flex;align-items:center;gap:4px;margin-left:10px">对齐<select id="cmAlign"><option value="left" ${wDraft.config.titleAlign==="center"?"":"selected"}>左</option><option value="center" ${wDraft.config.titleAlign==="center"?"selected":""}>中</option><option value="right" ${wDraft.config.titleAlign==="right"?"selected":""}>右</option></select></label><label style="display:flex;align-items:center;gap:4px;margin-left:10px">字号<input id="cmTitleSize" type="number" min="10" max="30" value="${wDraft.config.titleSize||14}" style="width:56px"></label></div><div class="cfg-row"><label>标题颜色</label><span id="cmTitleRow" class="bg-row">${tOpts}</span></div><div class="f-label">组件通用样式</div><div class="cfg-row"><label>背景色</label><span id="cmBgRow" class="bg-row">${opts}</span></div><div class="cfg-row"><label>圆角</label><input id="cmRadius" type="number" min="0" max="40" value="${st.radius!=null?st.radius:8}" style="width:70px"><span style="font-size:11px;color:var(--sub)">px</span><label style="display:flex;align-items:center;gap:4px;margin-left:10px"><input type="checkbox" id="cmShadow" ${st.shadow?"checked":""}>阴影</label><label style="display:flex;align-items:center;gap:4px;margin-left:10px"><input type="checkbox" id="cmBorder" ${st.border?"checked":""}>边框</label></div></div>`;
 }
 function renderChartStyleTab(){
   const c=wDraft.config;
@@ -858,6 +860,10 @@ function bindCfgEvents(){
   const gtS=document.getElementById("gtStart"); if(gtS)gtS.onchange=e=>wDraft.config.startFieldId=e.target.value;
   const gtE=document.getElementById("gtEnd"); if(gtE)gtE.onchange=e=>wDraft.config.endFieldId=e.target.value;
   const gtP=document.getElementById("gtProg"); if(gtP)gtP.onchange=e=>wDraft.config.progressFieldId=e.target.value;
+  document.querySelectorAll("#cmTitleRow .bg-opt").forEach(el=>{ el.addEventListener("click",()=>{ wDraft.config.titleColor=el.dataset.v; renderCfg(); }); });
+  const cmShow=document.getElementById("cmShowTitle"); if(cmShow)cmShow.onchange=e=>wDraft.config.titleShow=e.target.checked;
+  const cmAl=document.getElementById("cmAlign"); if(cmAl)cmAl.onchange=e=>wDraft.config.titleAlign=e.target.value;
+  const cmTs=document.getElementById("cmTitleSize"); if(cmTs)cmTs.oninput=e=>wDraft.config.titleSize=parseInt(e.target.value)||14;
   document.querySelectorAll("#cmBgRow .bg-opt").forEach(el=>{ el.addEventListener("click",()=>{ wDraft.config.style.bg=el.dataset.v; renderCfg(); }); });
   const cmR=document.getElementById("cmRadius"); if(cmR)cmR.oninput=e=>{ wDraft.config.style.radius=parseInt(e.target.value)||0; };
   const cmS=document.getElementById("cmShadow"); if(cmS)cmS.onchange=e=>wDraft.config.style.shadow=e.target.checked;
