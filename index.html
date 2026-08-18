@@ -204,6 +204,9 @@
   .th-opt span{font-size:11px;color:var(--sub);}
   .th-opt:hover{transform:translateY(-1px);}
   .th-opt.sel{border-color:var(--blue);box-shadow:0 2px 8px rgba(0,0,0,.1);}
+  .mp-item .cmp{font-size:11px;font-weight:700;margin-left:6px;white-space:nowrap;}
+  .mp-item .cmp.up{color:#22c55e;}
+  .mp-item .cmp.down{color:#ef4444;}
   body.dark .shop .sr .pill.teal{background:#0e3a36;}
   body.dark .shop .sr .pill.purple{background:#2e1f4a;}
   body.dark .shop .sr .pill.orange{background:#3e2e15;}
@@ -327,6 +330,7 @@
     <span class="f-label2">全局筛选</span>
     <select id="filterSource" onchange="renderFilterFields()"><option value="">选择数据源</option></select>
     <select id="filterField" onchange="renderFilterValues()"><option value="">选择字段</option></select>
+    <select id="filterOp" onchange="applyFilter()"><option value="eq">等于</option><option value="neq">不等于</option><option value="contains">包含</option><option value="notContains">不包含</option><option value="gt">大于</option><option value="gte">大于等于</option><option value="lt">小于</option><option value="lte">小于等于</option><option value="isEmpty">为空</option><option value="notEmpty">不为空</option></select>
     <select id="filterValue" onchange="applyFilter()"><option value="">全部</option></select>
     <button class="btn sm" onclick="clearFilter()">清除筛选</button>
     <span id="filterTags"></span>
@@ -491,6 +495,9 @@ function render(){
     if(_st.radius!=null) _mstl+=`;border-radius:${_st.radius}px`;
     if(_st.shadow) _mstl+=`;box-shadow:0 4px 18px rgba(0,0,0,.12)`;
     if(_st.border) _mstl+=`;border:1px solid var(--line)`;
+    if(_st.pad!=null) _mstl+=`;padding:${_st.pad}px`;
+    if(_st.opacity!=null&&_st.opacity<100) _mstl+=`;opacity:${_st.opacity/100}`;
+    if(_st.borderColor) _mstl+=`;border-color:${COLOR_HEX[_st.borderColor]||_st.borderColor}`;
     return `
     <div class="module ${w.hidden?'hidden-w':''}" data-id="${w.id}" style="${_mstl}" ondblclick="editWidget('${w.id}')">
       <div class="module-bar" title="拖拽移动" ${w.config.titleShow===false?'style="display:none"':''}>
@@ -583,7 +590,9 @@ function renderMetric(w,s){
     const v=fieldAgg(s,it.fieldId,it.aggregate);
     const display=it.isPct?pct(v):(Math.round(v*100)/100);
     const c=valColor[i%valColor.length];
-    return `<div class="mp-item"><span class="v" style="color:var(--${c})">${esc(display)}</span>${it.suffix?`<span class="sfx">${esc(it.suffix)}</span>`:""}<span class="l">${esc(it.label||fieldName(s,it.fieldId))}</span></div>`;
+    let cmp="";
+    if(it.compareFieldId){ const cv=fieldAgg(s,it.compareFieldId,it.aggregate); if(cv){ const chg=(v-cv)/cv*100; const up=chg>=0; cmp=`<span class="cmp ${up?"up":"down"}">${up?"\u25b2":"\u25bc"} ${Math.abs(chg).toFixed(1)}%</span>`; } }
+    return `<div class="mp-item"><span class="v" style="color:var(--${c})">${esc(display)}</span>${it.suffix?`<span class="sfx">${esc(it.suffix)}</span>`:""}${cmp}<span class="l">${esc(it.label||fieldName(s,it.fieldId))}</span></div>`;
   }).join("");
   let ratios=ratioItems.map((it,i)=>{
     const v=ratioTotal(s,it);
@@ -754,7 +763,7 @@ function renderCfg(){
   else if(wDraft.type==="cards"){ if(cfgTabMode==="style"){ body=renderCardsStyleTab(); } else { body=`<div class="cfg-panel active">`+srcSel+`<div class="cfg-row"><label>标题字段</label><select id="cGroup"><option value="">--</option>${fOpt(wDraft.config.groupFieldId)}</select><label>标签字段</label><select id="cTag"><option value="">--</option>${fOpt(wDraft.config.tagFieldId)}</select></div><div class="f-label">数值字段</div><div id="cNums">${(wDraft.config.numFieldIds||[]).map((fid,i)=>`<div class="cfg-row"><select data-num="${i}"><option value="">--</option>${fOpt(fid)}</select><span class="fd" onclick="delNumField(${i})">删除</span></div>`).join("")}</div><button class="btn sm" onclick="addNumField()">+ 数值字段</button><div class="f-label">比率指标（胶囊标签）</div><div id="cRatios">${(wDraft.config.ratioFieldIds||[]).map((x,i)=>`<div class="cfg-row"><input data-rlbl="${i}" value="${esc(x.label||"")}" placeholder="标签名" style="width:100px"><select data-rnum="${i}"><option value="">--分子--</option>${fOpt(x.numId)}</select><select data-rden="${i}"><option value="">--分母--</option>${fOpt(x.denId)}</select><span class="fd" onclick="delRatio(${i})">删除</span></div>`).join("")}</div><button class="btn sm" onclick="addRatio()">+ 比率指标</button><div class="f-label">进度条指标</div><div id="cProgs">${(wDraft.config.progFieldIds||[]).map((x,i)=>`<div class="cfg-row"><input data-plbl="${i}" value="${esc(x.label||"")}" placeholder="标签名" style="width:100px"><select data-pnum="${i}"><option value="">--分子--</option>${fOpt(x.numId)}</select><select data-pden="${i}"><option value="">--分母--</option>${fOpt(x.denId)}</select><span class="fd" onclick="delProg(${i})">删除</span></div>`).join("")}</div><button class="btn sm" onclick="addProg()">+ 进度条</button>`+`</div>`; } }
   else if(wDraft.type==="rank"){ body=`<div class="cfg-panel active">`+srcSel+`<div class="cfg-row"><label>排序字段</label><select id="rField"><option value="">--</option>${fOpt(wDraft.config.fieldId)}</select><label>排序</label><select id="rOrder"><option value="desc" ${wDraft.config.order==="desc"?"selected":""}>降序</option><option value="asc" ${wDraft.config.order==="asc"?"selected":""}>升序</option></select><label>条数</label><input id="rTop" type="number" value="${wDraft.config.topN}" style="width:70px"></div><div class="cfg-row"><label>名称字段</label><select id="rGroup"><option value="">--</option>${fOpt(wDraft.config.groupFieldId||"")}</select></div>`+`</div>`; }
   else if(wDraft.type==="table"){ body=`<div class="cfg-panel active">`+srcSel+`<div class="f-label">展示字段列</div><div id="tCols">${(wDraft.config.columnIds||[]).map((fid,i)=>`<div class="cfg-row"><select data-col="${i}"><option value="">--</option>${fOpt(fid)}</select><span class="fd" onclick="delCol(${i})">删除</span></div>`).join("")}</div><button class="btn sm" onclick="addCol()">+ 字段列</button>`+`</div>`; }
-  else if(wDraft.type==="metric"){ if(cfgTabMode==="style"){ body=renderMetricStyleTab(); } else { body=`<div class="cfg-panel active">`+srcSel+`<div class="f-label">数值指标（大数字展示）</div><div id="mNums">${(wDraft.config.numItems||[]).map((it,i)=>`<div class="cfg-item"><div class="cfg-head">数值指标 ${i+1}<span class="c-del" onclick="delMetricNum(${i})">删除</span></div><div class="cfg-row"><input data-mn="${i}" data-k="label" value="${esc(it.label)}" placeholder="标签名" style="width:120px"><select data-mn="${i}" data-k="fieldId"><option value="">--字段--</option>${fOpt(it.fieldId)}</select><select data-mn="${i}" data-k="aggregate">${AGGS.map(a=>`<option ${it.aggregate===a?"selected":""}>${a}</option>`).join("")}</select></div><div class="cfg-row"><input data-mn="${i}" data-k="suffix" value="${esc(it.suffix)}" placeholder="后缀" style="width:80px"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" data-mn="${i}" data-k="isPct" ${it.isPct?"checked":""}>百分比</label></div></div>`).join("")}</div><button class="btn sm" onclick="addMetricNum()">+ 数值指标</button><div class="f-label">比率指标（胶囊标签）</div><div id="mRatios">${(wDraft.config.ratioItems||[]).map((it,i)=>`<div class="cfg-item"><div class="cfg-head">比率指标 ${i+1}<span class="c-del" onclick="delMetricRatio(${i})">删除</span></div><div class="cfg-row"><input data-mr="${i}" data-k="label" value="${esc(it.label)}" placeholder="标签名" style="width:120px"><select data-mr="${i}" data-k="numId"><option value="">--分子--</option>${fOpt(it.numId)}</select><select data-mr="${i}" data-k="denId"><option value="">--分母--</option>${fOpt(it.denId)}</select></div><div class="cfg-row"><label>颜色</label>${cpHTML(it.color||"blue",`data-mr="${i}" data-k="color"`)}<label style="display:flex;align-items:center;gap:4px"><input type="checkbox" data-mr="${i}" data-k="isPct" ${it.isPct!==false?"checked":""}>百分比</label></div></div>`).join("")}</div><button class="btn sm" onclick="addMetricRatio()">+ 比率指标</button><div class="f-label">进度条指标</div><div id="mProgs">${(wDraft.config.progItems||[]).map((it,i)=>`<div class="cfg-item"><div class="cfg-head">进度条 ${i+1}<span class="c-del" onclick="delMetricProg(${i})">删除</span></div><div class="cfg-row"><input data-mp="${i}" data-k="label" value="${esc(it.label)}" placeholder="标签名" style="flex:1">${cpHTML(it.color||"blue",`data-mp="${i}" data-k="color"`)}</div><div class="cfg-row"><select data-mp="${i}" data-k="numId"><option value="">--分子--</option>${fOpt(it.numId)}</select><select data-mp="${i}" data-k="denId"><option value="">--分母--</option>${fOpt(it.denId)}</select></div></div>`).join("")}</div><button class="btn sm" onclick="addMetricProg()">+ 进度条</button>`+`</div>`; } }
+  else if(wDraft.type==="metric"){ if(cfgTabMode==="style"){ body=renderMetricStyleTab(); } else { body=`<div class="cfg-panel active">`+srcSel+`<div class="f-label">数值指标（大数字展示）</div><div id="mNums">${(wDraft.config.numItems||[]).map((it,i)=>`<div class="cfg-item"><div class="cfg-head">数值指标 ${i+1}<span class="c-del" onclick="delMetricNum(${i})">删除</span></div><div class="cfg-row"><input data-mn="${i}" data-k="label" value="${esc(it.label)}" placeholder="标签名" style="width:120px"><select data-mn="${i}" data-k="fieldId"><option value="">--字段--</option>${fOpt(it.fieldId)}</select><select data-mn="${i}" data-k="aggregate">${AGGS.map(a=>`<option ${it.aggregate===a?"selected":""}>${a}</option>`).join("")}</select></div><div class="cfg-row"><input data-mn="${i}" data-k="suffix" value="${esc(it.suffix)}" placeholder="后缀" style="width:80px"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" data-mn="${i}" data-k="isPct" ${it.isPct?"checked":""}>百分比</label></div><div class="cfg-row"><label>环比字段</label><select data-mn="${i}" data-k="compareFieldId"><option value="">-- 无（不显示环比）--</option>${fOpt(it.compareFieldId)}</select><span style="font-size:11px;color:var(--sub)">按该字段聚合作为上期值，显示涨跌</span></div></div>`).join("")}</div><button class="btn sm" onclick="addMetricNum()">+ 数值指标</button><div class="f-label">比率指标（胶囊标签）</div><div id="mRatios">${(wDraft.config.ratioItems||[]).map((it,i)=>`<div class="cfg-item"><div class="cfg-head">比率指标 ${i+1}<span class="c-del" onclick="delMetricRatio(${i})">删除</span></div><div class="cfg-row"><input data-mr="${i}" data-k="label" value="${esc(it.label)}" placeholder="标签名" style="width:120px"><select data-mr="${i}" data-k="numId"><option value="">--分子--</option>${fOpt(it.numId)}</select><select data-mr="${i}" data-k="denId"><option value="">--分母--</option>${fOpt(it.denId)}</select></div><div class="cfg-row"><label>颜色</label>${cpHTML(it.color||"blue",`data-mr="${i}" data-k="color"`)}<label style="display:flex;align-items:center;gap:4px"><input type="checkbox" data-mr="${i}" data-k="isPct" ${it.isPct!==false?"checked":""}>百分比</label></div></div>`).join("")}</div><button class="btn sm" onclick="addMetricRatio()">+ 比率指标</button><div class="f-label">进度条指标</div><div id="mProgs">${(wDraft.config.progItems||[]).map((it,i)=>`<div class="cfg-item"><div class="cfg-head">进度条 ${i+1}<span class="c-del" onclick="delMetricProg(${i})">删除</span></div><div class="cfg-row"><input data-mp="${i}" data-k="label" value="${esc(it.label)}" placeholder="标签名" style="flex:1">${cpHTML(it.color||"blue",`data-mp="${i}" data-k="color"`)}</div><div class="cfg-row"><select data-mp="${i}" data-k="numId"><option value="">--分子--</option>${fOpt(it.numId)}</select><select data-mp="${i}" data-k="denId"><option value="">--分母--</option>${fOpt(it.denId)}</select></div></div>`).join("")}</div><button class="btn sm" onclick="addMetricProg()">+ 进度条</button>`+`</div>`; } }
   else if(wDraft.type==="divider"){ const cc=wDraft.config; body=`<div class="cfg-panel active">`+`<div class="cfg-row"><label>\u6807\u9898\u6587\u5b57</label><input id="dvTitle" value="${esc(cc.title||"")}" style="flex:1"></div><div class="cfg-row"><label>\u989c\u8272</label>${cpHTML(cc.color||"blue",`data-cpfield="color"`)}</div>`+`</div>`; }
   else if(wDraft.type==="wordcloud"){ const cc=wDraft.config; body=`<div class="cfg-panel active">`+`<div class="f-label">\u8bcd\u4e91\u914d\u7f6e</div><div class="cfg-row"><label>\u6587\u672c\u5b57\u6bb5</label><select id="wcText"><option value="">--</option>${fOpt(cc.textFieldId)}</select></div><div class="cfg-row"><label>\u6570\u503c\u5b57\u6bb5</label><select id="wcValue"><option value="">--\u53ef\u9009--</option>${fOpt(cc.valueFieldId)}</select><span style="font-size:11px;color:var(--sub)">\u7559\u7a7a\u5219\u6309\u51fa\u73b0\u6b21\u6570\u8ba1\u7b97</span></div>`+`</div>`; }
   else if(wDraft.type==="gantt"){ const cc=wDraft.config; body=`<div class="cfg-panel active">`+srcSel+`<div class="f-label">甘特图配置</div><div class="cfg-row"><label>任务字段</label><select id="gtTask"><option value="">--</option>${fOpt(cc.taskFieldId)}</select></div><div class="cfg-row"><label>开始字段</label><select id="gtStart"><option value="">--</option>${fOpt(cc.startFieldId)}</select><label>结束字段</label><select id="gtEnd"><option value="">--</option>${fOpt(cc.endFieldId)}</select></div><div class="cfg-row"><label>进度字段</label><select id="gtProg"><option value="">--可选--</option>${fOpt(cc.progressFieldId)}</select><label>颜色</label>${cpHTML(cc.color||"blue",`data-cpfield="color"`)}</div>`+`</div>`; }
@@ -777,7 +786,9 @@ function renderCommonStyle(){
   const tc=wDraft.config.titleColor||"";
   const opts='<span class="bg-opt '+(bg===""?"sel":"")+'" data-v="" title="无" style="background:transparent;border:1px dashed var(--line)">∅</span>'+COLORS.map(cc=>'<span class="bg-opt '+(bg===cc?"sel":"")+'" data-v="'+cc+'" style="background:'+COLOR_HEX[cc]+'" title="'+cc+'"></span>').join('');
   const tOpts='<span class="bg-opt '+(tc===""?"sel":"")+'" data-v="" title="无" style="background:transparent;border:1px dashed var(--line)">∅</span>'+COLORS.map(cc=>'<span class="bg-opt '+(tc===cc?"sel":"")+'" data-v="'+cc+'" style="background:'+COLOR_HEX[cc]+'" title="'+cc+'"></span>').join('');
-  return `<div class="cfg-panel active" style="margin-top:10px"><div class="f-label">标题</div><div class="cfg-row"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="cmShowTitle" ${wDraft.config.titleShow!==false?"checked":""}>显示标题</label><label style="display:flex;align-items:center;gap:4px;margin-left:10px">对齐<select id="cmAlign"><option value="left" ${wDraft.config.titleAlign==="center"?"":"selected"}>左</option><option value="center" ${wDraft.config.titleAlign==="center"?"selected":""}>中</option><option value="right" ${wDraft.config.titleAlign==="right"?"selected":""}>右</option></select></label><label style="display:flex;align-items:center;gap:4px;margin-left:10px">字号<input id="cmTitleSize" type="number" min="10" max="30" value="${wDraft.config.titleSize||14}" style="width:56px"></label></div><div class="cfg-row"><label>标题颜色</label><span id="cmTitleRow" class="bg-row">${tOpts}</span></div><div class="f-label">组件通用样式</div><div class="cfg-row"><label>背景色</label><span id="cmBgRow" class="bg-row">${opts}</span></div><div class="cfg-row"><label>圆角</label><input id="cmRadius" type="number" min="0" max="40" value="${st.radius!=null?st.radius:8}" style="width:70px"><span style="font-size:11px;color:var(--sub)">px</span><label style="display:flex;align-items:center;gap:4px;margin-left:10px"><input type="checkbox" id="cmShadow" ${st.shadow?"checked":""}>阴影</label><label style="display:flex;align-items:center;gap:4px;margin-left:10px"><input type="checkbox" id="cmBorder" ${st.border?"checked":""}>边框</label></div></div>`;
+  const bc=st.borderColor||"";
+  const opts2='<span class="bg-opt '+(bc===""?"sel":"")+'" data-v="" title="无" style="background:transparent;border:1px dashed var(--line)">∅</span>'+COLORS.map(cc=>'<span class="bg-opt '+(bc===cc?"sel":"")+'" data-v="'+cc+'" style="background:'+COLOR_HEX[cc]+'" title="'+cc+'"></span>').join('');
+  return `<div class="cfg-panel active" style="margin-top:10px"><div class="f-label">标题</div><div class="cfg-row"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="cmShowTitle" ${wDraft.config.titleShow!==false?"checked":""}>显示标题</label><label style="display:flex;align-items:center;gap:4px;margin-left:10px">对齐<select id="cmAlign"><option value="left" ${wDraft.config.titleAlign==="center"?"":"selected"}>左</option><option value="center" ${wDraft.config.titleAlign==="center"?"selected":""}>中</option><option value="right" ${wDraft.config.titleAlign==="right"?"selected":""}>右</option></select></label><label style="display:flex;align-items:center;gap:4px;margin-left:10px">字号<input id="cmTitleSize" type="number" min="10" max="30" value="${wDraft.config.titleSize||14}" style="width:56px"></label></div><div class="cfg-row"><label>标题颜色</label><span id="cmTitleRow" class="bg-row">${tOpts}</span></div><div class="f-label">组件通用样式</div><div class="cfg-row"><label>背景色</label><span id="cmBgRow" class="bg-row">${opts}</span></div><div class="cfg-row"><label>圆角</label><input id="cmRadius" type="number" min="0" max="40" value="${st.radius!=null?st.radius:8}" style="width:70px"><span style="font-size:11px;color:var(--sub)">px</span><label style="display:flex;align-items:center;gap:4px;margin-left:10px"><input type="checkbox" id="cmShadow" ${st.shadow?"checked":""}>阴影</label><label style="display:flex;align-items:center;gap:4px;margin-left:10px"><input type="checkbox" id="cmBorder" ${st.border?"checked":""}>边框</label></div><div class="cfg-row"><label>内边距</label><input id="cmPad" type="number" min="0" max="30" value="${st.pad!=null?st.pad:0}" style="width:60px"><span style="font-size:11px;color:var(--sub)">px</span><label style="display:flex;align-items:center;gap:4px;margin-left:10px">透明度<input id="cmOpacity" type="number" min="0" max="100" value="${st.opacity!=null?st.opacity:100}" style="width:56px"></label></div><div class="cfg-row"><label>边框颜色</label><span id="cmBorderRow" class="bg-row">${opts2}</span></div></div>`;
 }
 function renderChartStyleTab(){
   const c=wDraft.config;
@@ -787,10 +798,11 @@ function renderWidgetFilterCfg(){
   const s=getSource(wDraft.sourceId); const fields=s?s.fields:[];
   const fOpt2=fid=>fields.map(f=>`<option value="${f.id}" ${fid===f.id?"selected":""}>${esc(f.name)}</option>`).join("");
   const filters=wDraft.config.filters||[];
-  return `<div style="margin-top:6px;padding-top:12px;border-top:1px solid var(--line)"><div class="f-label">\u6570\u636e\u8303\u56f4\uff08\u7ec4\u4ef6\u7b5b\u9009\uff09</div><div id="wFilters">${filters.map((f,i)=>`<div class="cfg-row"><select data-wf="${i}" data-k="fieldId"><option value="">--\u5b57\u6bb5--</option>${fOpt2(f.fieldId)}</select><input data-wf="${i}" data-k="value" value="${esc(f.value)}" placeholder="\u7b49\u4e8e\u503c" style="width:120px"><span class="fd" onclick="delWidgetFilter(${i})">\u5220\u9664</span></div>`).join("")}</div><button class="btn sm" onclick="addWidgetFilter()">+ \u6dfb\u52a0\u7b5b\u9009\u6761\u4ef6</button><div style="font-size:11px;color:var(--sub);margin-top:6px">\u591a\u4e2a\u6761\u4ef6\u4e3a AND \u5173\u7cfb\uff0c\u53ea\u663e\u793a\u540c\u65f6\u6ee1\u8db3\u6240\u6709\u6761\u4ef6\u7684\u6570\u636e</div></div>`;
+  const rel=wDraft.config.filterRel||"and";
+  return `<div style="margin-top:6px;padding-top:12px;border-top:1px solid var(--line)"><div class="f-label">\u6570\u636e\u8303\u56f4\uff08\u7ec4\u4ef6\u7b5b\u9009\uff09</div><div class="cfg-row"><label>\u6761\u4ef6\u5173\u7cfb</label><select id="wfRel"><option value="and" ${rel==="and"?"selected":""}>\u540c\u65f6\u6ee1\u8db3\uff08AND\uff09</option><option value="or" ${rel==="or"?"selected":""}>\u4efb\u4e00\u6ee1\u8db3\uff08OR\uff09</option></select></div><div id="wFilters">${filters.map((f,i)=>`<div class="cfg-row"><select data-wf="${i}" data-k="fieldId"><option value="">--\u5b57\u6bb5--</option>${fOpt2(f.fieldId)}</select><select data-wf="${i}" data-k="op">${FILTER_OPS.map(o=>`<option value="${o[0]}" ${(f.op||"eq")===o[0]?"selected":""}>${o[1]}</option>`).join("")}</select><input data-wf="${i}" data-k="value" value="${esc(f.value)}" placeholder="\u503c" style="width:110px"><span class="fd" onclick="delWidgetFilter(${i})">\u5220\u9664</span></div>`).join("")}</div><button class="btn sm" onclick="addWidgetFilter()">+ \u6dfb\u52a0\u7b5b\u9009\u6761\u4ef6</button><div style="font-size:11px;color:var(--sub);margin-top:6px">\u652f\u6301\u7b49\u4e8e/\u5305\u542b/\u5927\u4e8e/\u4e3a\u7a7a\u7b49\u8fd0\u7b97\u7b26\uff0c\u53ef\u6309 AND \u6216 OR \u7ec4\u5408</div></div>`;
 }
-function addWidgetFilter(){ wDraft.config.filters=wDraft.config.filters||[]; wDraft.config.filters.push({fieldId:"",value:""}); renderCfg(); }
-function delWidgetFilter(i){ wDraft.config.filters.splice(i,1); renderCfg(); }
+function addWidgetFilter(){ wDraft.config.filters=wDraft.config.filters||[]; wDraft.config.filters.push({fieldId:"",op:"eq",value:""}); renderCfg(); }
+
 function renderKpiStyleTab(){
   const items=wDraft.config.items||[];
   return `<div class="cfg-panel active"><div class="f-label">指标颜色设置</div>${items.map((it,i)=>`<div class="cfg-row"><label>指标${i+1}</label><span style="font-size:13px;min-width:100px">${esc(it.name||"指标"+(i+1))}</span>${cpHTML(it.color||"gray",`data-i="${i}" data-k="color"`)}</div>`).join("")||'<div class="hint">暂无指标项</div>'}</div>`;
@@ -871,6 +883,7 @@ function bindCfgEvents(){
   const chLabelSize=document.getElementById("chLabelSize"); if(chLabelSize)chLabelSize.oninput=e=>wDraft.config.labelSize=parseInt(e.target.value)||12;
   const chAxisX=document.getElementById("chAxisX"); if(chAxisX)chAxisX.oninput=e=>wDraft.config.axisNameX=e.target.value;
   const chAxisY=document.getElementById("chAxisY"); if(chAxisY)chAxisY.oninput=e=>wDraft.config.axisNameY=e.target.value;
+  const wfRel=document.getElementById("wfRel"); if(wfRel)wfRel.onchange=e=>wDraft.config.filterRel=e.target.value;
   document.querySelectorAll("#wFilters [data-wf]").forEach(el=>{ const i=+el.dataset.wf,k=el.dataset.k; el.addEventListener("change",()=>{ wDraft.config.filters[i][k]=el.value; }); el.addEventListener("input",()=>{ if(el.tagName==="INPUT") wDraft.config.filters[i][k]=el.value; }); });
   const gtT=document.getElementById("gtTask"); if(gtT)gtT.onchange=e=>wDraft.config.taskFieldId=e.target.value;
   const gtS=document.getElementById("gtStart"); if(gtS)gtS.onchange=e=>wDraft.config.startFieldId=e.target.value;
@@ -884,6 +897,9 @@ function bindCfgEvents(){
   const cmR=document.getElementById("cmRadius"); if(cmR)cmR.oninput=e=>{ wDraft.config.style.radius=parseInt(e.target.value)||0; };
   const cmS=document.getElementById("cmShadow"); if(cmS)cmS.onchange=e=>wDraft.config.style.shadow=e.target.checked;
   const cmB=document.getElementById("cmBorder"); if(cmB)cmB.onchange=e=>wDraft.config.style.border=e.target.checked;
+  const cmPad=document.getElementById("cmPad"); if(cmPad)cmPad.oninput=e=>wDraft.config.style.pad=parseInt(e.target.value)||0;
+  const cmOp=document.getElementById("cmOpacity"); if(cmOp)cmOp.oninput=e=>wDraft.config.style.opacity=parseInt(e.target.value)||100;
+  document.querySelectorAll("#cmBorderRow .bg-opt").forEach(el=>{ el.addEventListener("click",()=>{ wDraft.config.style.borderColor=el.dataset.v; renderCfg(); }); });
   bindColorPickers();
 }
 function addKpiItem(){wDraft.config.items.push({name:"新指标",kind:"field",fieldId:"",aggregate:"sum",isPct:false,note:"",color:"gray"});renderCfg();} function delKpiItem(i){wDraft.config.items.splice(i,1);renderCfg();}
@@ -1017,6 +1033,7 @@ function renderFilterFields() {
   const sid = document.getElementById("filterSource").value;
   document.getElementById("filterField").innerHTML = '<option value="">选择字段</option>';
   document.getElementById("filterValue").innerHTML = '<option value="">全部</option>';
+  const fo0=document.getElementById("filterOp"); if(fo0)fo0.value="eq";
   if (!sid) return;
   const s = getSource(sid); if (!s) return;
   document.getElementById("filterField").innerHTML = '<option value="">选择字段</option>' + s.fields.map(f => '<option value="'+f.id+'">'+esc(f.name)+'</option>').join("");
@@ -1032,6 +1049,7 @@ function renderFilterValues() {
   filterState.fieldId = fid;
 }
 function applyFilter() {
+  const foA=document.getElementById("filterOp"); filterState.op=foA?foA.value:"eq";
   filterState.value = document.getElementById("filterValue").value || "";
   renderFilterTags(); render();
 }
@@ -1047,19 +1065,37 @@ function renderFilterTags() {
   if (!filterState.sourceId || !filterState.fieldId) { box.innerHTML = ""; return; }
   const s = getSource(filterState.sourceId);
   const fn = s ? fieldName(s, filterState.fieldId) : "";
-  box.innerHTML = '<span class="f-tag">'+esc(fn)+' = '+esc(filterState.value || "全部")+' <span class="x" onclick="clearFilter()">&times;</span></span>';
+  const sym=OP_SYM[filterState.op]||"="; const disp=(filterState.op==="isEmpty"||filterState.op==="notEmpty")?"":(esc(filterState.value || "全部")); box.innerHTML = '<span class="f-tag">'+esc(fn)+' '+sym+' '+disp+' <span class="x" onclick="clearFilter()">&times;</span></span>';
 }
 let _curWidget=null;
+const FILTER_OPS=[["eq","\u7b49\u4e8e"],["neq","\u4e0d\u7b49\u4e8e"],["contains","\u5305\u542b"],["notContains","\u4e0d\u5305\u542b"],["gt","\u5927\u4e8e"],["gte","\u5927\u4e8e\u7b49\u4e8e"],["lt","\u5c0f\u4e8e"],["lte","\u5c0f\u4e8e\u7b49\u4e8e"],["isEmpty","\u4e3a\u7a7a"],["notEmpty","\u4e0d\u4e3a\u7a7a"]];
+const OP_SYM={eq:"=",neq:"\u2260",contains:"\u542b",notContains:"\u4e0d\u542b",gt:">",gte:"\u2265",lt:"<",lte:"\u2264",isEmpty:"\u4e3a\u7a7a",notEmpty:"\u4e0d\u4e3a\u7a7a"};
+function filterMatch(row,f){
+  if(!f.fieldId) return true;
+  const s=String(row[f.fieldId]??"");
+  const t=String(f.value??"");
+  switch(f.op||"eq"){
+    case "eq":return s===t;
+    case "neq":return s!==t;
+    case "contains":return s.includes(t);
+    case "notContains":return !s.includes(t);
+    case "isEmpty":return s==="";
+    case "notEmpty":return s!=="";
+    case "gt":{const n=Number(row[f.fieldId]),m=Number(t);return !isNaN(n)&&!isNaN(m)&&n>m;}
+    case "gte":{const n=Number(row[f.fieldId]),m=Number(t);return !isNaN(n)&&!isNaN(m)&&n>=m;}
+    case "lt":{const n=Number(row[f.fieldId]),m=Number(t);return !isNaN(n)&&!isNaN(m)&&n<m;}
+    case "lte":{const n=Number(row[f.fieldId]),m=Number(t);return !isNaN(n)&&!isNaN(m)&&n<=m;}
+  }
+  return true;
+}
 function getFilteredRows(s) {
   let rows = s.rows;
-  if (filterState.sourceId === s.id && filterState.fieldId && filterState.value) {
-    rows = rows.filter(r => String(r[filterState.fieldId] ?? "") === filterState.value);
+  if (filterState.sourceId === s.id && filterState.fieldId) {
+    rows = rows.filter(r => filterMatch(r,{fieldId:filterState.fieldId,op:filterState.op||"eq",value:filterState.value||""}));
   }
   if (_curWidget && _curWidget.config && _curWidget.config.filters && _curWidget.config.filters.length) {
-    rows = rows.filter(r => _curWidget.config.filters.every(f => {
-      if (!f.fieldId || f.value === "") return true;
-      return String(r[f.fieldId] ?? "") === String(f.value);
-    }));
+    const rel=_curWidget.config.filterRel||"and";
+    rows = rows.filter(r => { const res=_curWidget.config.filters.map(f=>filterMatch(r,f)); return rel==="or"?res.some(Boolean):res.every(Boolean); });
   }
   return rows;
 }
