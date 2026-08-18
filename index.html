@@ -62,10 +62,14 @@
   #srcPanel .src-ops{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:6px 0 10px;}
   #srcPanel .src-selinfo{font-size:12px;color:var(--sub);margin-right:4px;font-weight:600;}
   #srcPanel table.data tr.sel{background:#eef4ff;}
+  #srcEditor .data-wrap{overflow:auto;max-height:calc(100vh - 330px);min-height:220px;width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;}
+  #srcEditor table.data{min-width:max-content;}
+  #srcEditor table.data thead th{position:sticky;top:0;background:#f8fafc;z-index:2;border-bottom:1px solid var(--line);}
   #srcPanel table.data .rowno input{width:16px;height:16px;cursor:pointer;vertical-align:middle;}
   .btn.danger{color:#ef4444;border-color:#f5c2c2;}
   .btn.danger:hover{background:#fdecec;}
-  #srcPanel .split{display:flex;gap:16px;align-items:flex-start;}
+  #srcPanel .split{display:flex;gap:16px;align-items:flex-start;min-width:0;}
+  #srcEditor{min-width:0;flex:1;overflow:hidden;}
   #srcPanel .sidelist{width:220px;flex-shrink:0;}
   body.dark .sidebar,body.dark .panel{background:#1a2233;}
   .login-card{background:#fff;border-radius:20px;padding:40px 34px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;}
@@ -1187,7 +1191,7 @@ function renderSrcEditor(){
     return `<input ${d} value="${esc(v)}">`;
   };
   const allSel=s.rows.length>0&&srcSelRows.length===s.rows.length;
-  const tableHtml=cols.length?`<table class="data"><thead><tr><th class="rowno"><input type="checkbox" onchange="toggleSrcAll(this)" ${allSel?"checked":""} title="全选"></th><th class="rowno">#</th>${cols.map(f=>`<th>${esc(f.name)}<span class="th-type">${typeLbl(f.type)}</span></th>`).join("")}<th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}" class="${srcSelRows.includes(ri)?"sel":""}"><td class="rowno"><input type="checkbox" ${srcSelRows.includes(ri)?"checked":""} onchange="toggleSrcRow(${ri})"></td><td class="rowno">${ri+1}</td>${cols.map(f=>`<td>${cellCtrl(f,ri,r)}</td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table>`:'<div class="hint">该数据源暂无字段，请先添加字段模板。</div>';
+  const tableHtml=cols.length?`<div class="data-wrap"><table class="data"><thead><tr><th class="rowno"><input type="checkbox" onchange="toggleSrcAll(this)" ${allSel?"checked":""} title="全选"></th><th class="rowno">#</th>${cols.map(f=>`<th>${esc(f.name)}<span class="th-type">${typeLbl(f.type)}</span></th>`).join("")}<th></th></tr></thead><tbody>${s.rows.map((r,ri)=>`<tr data-r="${ri}" class="${srcSelRows.includes(ri)?"sel":""}"><td class="rowno"><input type="checkbox" ${srcSelRows.includes(ri)?"checked":""} onchange="toggleSrcRow(${ri})"></td><td class="rowno">${ri+1}</td>${cols.map(f=>`<td>${cellCtrl(f,ri,r)}</td>`).join("")}<td><span class="fd" onclick="delRow(${ri})">删除</span></td></tr>`).join("")}</tbody></table></div>`:'<div class="hint">该数据源暂无字段，请先添加字段模板。</div>';
   box.innerHTML=`<div class="f-label">数据源名称</div><div class="cfg-row"><input id="srcName" value="${esc(s.name)}" style="width:220px"></div><div class="f-label">字段模板（自定义结构）</div><div id="fieldList">${fieldsHtml}</div><button class="btn sm" onclick="addField()">+ 添加字段</button><div class="f-label">数据记录</div><div class="src-ops"><span class="src-selinfo" id="srcSelInfo">已选 ${srcSelRows.length} 行</span><button class="btn sm" onclick="srcCopySel()">复制</button><button class="btn sm" onclick="srcCutSel()">剪切</button><button class="btn sm" onclick="srcPaste()">粘贴</button><button class="btn sm" onclick="srcInsertRows(-1)">上方插入</button><button class="btn sm" onclick="srcInsertRows(1)">下方插入</button><button class="btn sm" onclick="srcClearSel()">清除内容</button><button class="btn sm danger" onclick="srcDelSel()">删除选中</button></div>${tableHtml}<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;"><button class="btn sm" onclick="addRow()">+ 新增行</button><button class="btn sm" onclick="importToSource('${s.id}')">导入 Excel/CSV</button><button class="btn sm" onclick="pasteToSource('${s.id}')">粘贴数据</button></div>`;
   document.getElementById("srcName").addEventListener("input",e=>s.name=e.target.value);
   document.querySelectorAll("#fieldList [data-fi]").forEach(el=>el.addEventListener("input",()=>{const f=s.fields[+el.dataset.fi];f[el.dataset.k]=el.value;}));
