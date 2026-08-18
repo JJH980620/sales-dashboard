@@ -8,7 +8,7 @@
   :root{
     --bg:#eef3fb; --card:#fff; --ink:#1f2d3d; --sub:#8a97a8; --line:#e7edf5;
     --blue:#3b82f6; --green:#22c55e; --gray:#9aa7b5; --purple:#a855f7;
-    --teal:#14b8a6; --orange:#f59e0b; --pink:#ec4899; --red:#ef4444;
+    --teal:#14b8a6; --orange:#f59e0b; --pink:#ec4899; --red:#ef4444; --grid-line:rgba(0,0,0,.05);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
   body{font-family:"Microsoft YaHei","PingFang SC","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);padding:20px 24px 48px;}
@@ -197,6 +197,13 @@
   body.dark .m-actions .btn{background:#2a3045;}
   body.dark #canvas{background:#1e2333;}
   body.dark .shop .sr .pill.blue{background:#1e3a5e;}
+  body.dark{--grid-line:rgba(255,255,255,.07);}
+  #canvas.grid-on{background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-repeat:repeat;}
+  .th-opt{display:inline-flex;flex-direction:column;align-items:center;gap:4px;padding:8px;border-radius:10px;cursor:pointer;border:2px solid transparent;width:92px;}
+  .th-opt i{width:100%;height:42px;border-radius:6px;display:block;}
+  .th-opt span{font-size:11px;color:var(--sub);}
+  .th-opt:hover{transform:translateY(-1px);}
+  .th-opt.sel{border-color:var(--blue);box-shadow:0 2px 8px rgba(0,0,0,.1);}
   body.dark .shop .sr .pill.teal{background:#0e3a36;}
   body.dark .shop .sr .pill.purple{background:#2e1f4a;}
   body.dark .shop .sr .pill.orange{background:#3e2e15;}
@@ -370,6 +377,14 @@
       <div class="cfg-row"><input id="dsSub" placeholder="副标题" style="flex:1"></div>
       <div class="f-label">背景色</div>
       <div class="cfg-row"><input id="dsBg" type="color" style="width:50px;height:34px;padding:2px;border:1px solid var(--line);border-radius:8px"><span style="font-size:12px;color:var(--sub)">选择背景色（默认为系统主题）</span></div>
+      <div class="f-label">配色主题</div>
+      <div class="cfg-row"><div id="dsThemeRowWrap"></div></div>
+      <div class="f-label">背景图片（URL，可选）</div>
+      <div class="cfg-row"><input id="dsBgImg" placeholder="https://example.com/bg.jpg" style="flex:1"></div>
+      <div class="f-label">辅助网格</div>
+      <div class="cfg-row"><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="dsGrid">显示网格</label><label style="display:flex;align-items:center;gap:4px;margin-left:12px">大小<input id="dsGridSize" type="number" min="10" max="60" style="width:64px"></label></div>
+      <div class="f-label">导出图片倍率</div>
+      <div class="cfg-row"><select id="dsExportScale"><option value="1">1x 标准</option><option value="2">2x 高清</option><option value="3">3x 超清</option></select><span style="font-size:11px;color:var(--sub)">倍率越高，导出越清晰</span></div>
     </div>
     <div class="modal-foot"><button class="btn" onclick="closeModal('dashSetModal')">取消</button><button class="btn primary" onclick="saveDashSettings()">保存</button></div>
   </div>
@@ -437,6 +452,7 @@ function migrate(s){
   if(s&&!s.dashboards){ if(s.widgets){ const d={id:uid("d"),name:"看板1",widgets:s.widgets}; s.dashboards=[d]; s.currentId=d.id; delete s.widgets; } }
   if(!s||!s.dashboards||!s.dashboards.length) s=buildExample();
   s.dashboards.forEach(d=>autoLayout(d.widgets||[]));
+  s.theme=s.theme||"light"; s.showGrid=s.showGrid||false; s.gridSize=s.gridSize||20; s.exportScale=s.exportScale||2; s.bgImage=s.bgImage||"";
   return s;
 }
 let state=migrate(loadState());
@@ -460,10 +476,12 @@ function openDashMenu(e,id){ document.querySelectorAll(".menu").forEach(m=>m.rem
 function render(){
   disposeCharts();
   const dash=currentDash();
-  if(state.bg)document.body.style.background=state.bg; document.getElementById("appTitle").textContent=state.title||"通用数据看板";
+  applyTheme(state.theme||"light"); applyBg(); document.getElementById("appTitle").textContent=state.title||"通用数据看板";
   document.getElementById("appSub").textContent=(dash?dash.name:"")+(state.sub?" · "+state.sub:"");
   renderTabs();
   const canvas=document.getElementById("canvas");
+  canvas.classList.toggle("grid-on", !!state.showGrid);
+  if(state.showGrid) canvas.style.backgroundSize=(state.gridSize||20)+"px "+(state.gridSize||20)+"px";
   const widgets=dash?dash.widgets:[];
   if(!widgets.length){ canvas.style.height="420px"; canvas.innerHTML='<div class="canvas-empty">当前看板暂无组件，点击右上角「+ 添加组件」开始搭建。</div>'; return; }
   canvas.innerHTML=widgets.map(w=>{
@@ -845,8 +863,40 @@ function addRadarVal(){wDraft.config.valueFieldIds.push("");renderCfg();} functi
 function saveWidget(){ const ws=currentDash().widgets,idx=ws.findIndex(w=>w.id===wDraft.id); if(idx>=0)ws[idx]=wDraft; saveState(); closeModal("widgetCfgModal"); render(); toast("组件配置已保存"); }
 
 function dupWidget(id){ const ws=currentDash().widgets; const src=ws.find(w=>w.id===id); if(!src)return; const copy=JSON.parse(JSON.stringify(src)); copy.id=uid("w"); copy.name=src.name+"(副本)"; if(copy.x!==undefined){copy.x+=20;copy.y+=20;} ws.splice(ws.findIndex(w=>w.id===id)+1,0,copy); saveState(); render(); toast("已复制组件"); }
-function openDashSettings(){ document.getElementById("dsTitle").value=state.title||""; document.getElementById("dsSub").value=state.sub||""; document.getElementById("dsBg").value=state.bg||"#eef3fb"; showModal("dashSetModal"); }
-function saveDashSettings(){ state.title=document.getElementById("dsTitle").value.trim()||undefined; state.sub=document.getElementById("dsSub").value.trim()||undefined; const bg=document.getElementById("dsBg").value; state.bg=bg; document.body.style.background=bg; saveState(); closeModal("dashSetModal"); render(); toast("看板设置已保存"); }
+const THEMES={
+  light:{name:"\u6d45\u8272\u9ed8\u8ba4",bg:"#eef3fb",card:"#fff",ink:"#1f2d3d",sub:"#8a97a8",line:"#e7edf5",dark:false},
+  dark:{name:"\u6697\u591c",bg:"#1a1f2e",card:"#252b3d",ink:"#e4e8f0",sub:"#7a85a0",line:"#384055",dark:true},
+  ocean:{name:"\u5546\u52a1\u84dd",bg:"#e9f2fb",card:"#fff",ink:"#17324d",sub:"#6b87a3",line:"#d8e8f5",dark:false},
+  mint:{name:"\u6e05\u65b0\u7eff",bg:"#edf9f3",card:"#fff",ink:"#1d3a33",sub:"#6f9c8d",line:"#d8f0e4",dark:false},
+  sunset:{name:"\u6696\u6a59",bg:"#fdf3eb",card:"#fff",ink:"#4a3220",sub:"#b08a6a",line:"#f5e2d2",dark:false},
+  violet:{name:"\u7d2b\u591c",bg:"#f1eefb",card:"#fff",ink:"#33274d",sub:"#9183ad",line:"#e6e0f5",dark:false}
+};
+function applyTheme(id){ const t=THEMES[id]||THEMES.light; document.body.classList.toggle("dark",!!t.dark); const r=document.documentElement.style; r.setProperty("--bg",t.bg); r.setProperty("--card",t.card); r.setProperty("--ink",t.ink); r.setProperty("--sub",t.sub); r.setProperty("--line",t.line); r.setProperty("--grid-line",t.dark?"rgba(255,255,255,.07)":"rgba(0,0,0,.05)"); }
+function applyBg(){ const base=state.bg||getComputedStyle(document.body).backgroundColor; document.body.style.background=base; if(state.bgImage){ document.body.style.backgroundImage="url('"+state.bgImage+"')"; document.body.style.backgroundSize="cover"; document.body.style.backgroundPosition="center"; document.body.style.backgroundAttachment="fixed"; } else { document.body.style.backgroundImage=""; document.body.style.backgroundSize=""; document.body.style.backgroundAttachment=""; } }
+function themeOptions(sel){ return Object.keys(THEMES).map(id=>{const t=THEMES[id];return '<span class="th-opt '+(sel===id?'sel':'')+'" data-th="'+id+'" style="background:'+t.bg+'" title="'+t.name+'"><i style="background:'+t.card+';border:1px solid '+(t.dark?'#556':'#dde5ef')+'"></i><span>'+t.name+'</span></span>';}).join(''); }
+function openDashSettings(){
+  document.getElementById("dsTitle").value=state.title||"";
+  document.getElementById("dsSub").value=state.sub||"";
+  document.getElementById("dsBg").value=state.bg||"#eef3fb";
+  document.getElementById("dsBgImg").value=state.bgImage||"";
+  document.getElementById("dsGrid").checked=!!state.showGrid;
+  document.getElementById("dsGridSize").value=state.gridSize||20;
+  document.getElementById("dsExportScale").value=state.exportScale||2;
+  document.getElementById("dsThemeRowWrap").innerHTML=themeOptions(state.theme||"light");
+  document.querySelectorAll("#dsThemeRowWrap .th-opt").forEach(o=>o.onclick=()=>{ document.querySelectorAll("#dsThemeRowWrap .th-opt").forEach(x=>x.classList.remove("sel")); o.classList.add("sel"); applyTheme(o.dataset.th); });
+  showModal("dashSetModal");
+}
+function saveDashSettings(){
+  state.title=document.getElementById("dsTitle").value.trim()||undefined;
+  state.sub=document.getElementById("dsSub").value.trim()||undefined;
+  state.bg=document.getElementById("dsBg").value;
+  state.bgImage=document.getElementById("dsBgImg").value.trim()||"";
+  const selTh=document.querySelector("#dsThemeRowWrap .th-opt.sel"); if(selTh)state.theme=selTh.dataset.th;
+  state.showGrid=document.getElementById("dsGrid").checked;
+  state.gridSize=parseInt(document.getElementById("dsGridSize").value)||20;
+  state.exportScale=parseInt(document.getElementById("dsExportScale").value)||2;
+  saveState(); closeModal("dashSetModal"); render(); toast("\u770b\u677f\u8bbe\u7f6e\u5df2\u4fdd\u5b58");
+}
 function openWidgets(){ showModal("widgetModal"); const dash=currentDash(); document.getElementById("widgetList").innerHTML=dash.widgets.map(w=>`<div class="cfg-item"><div class="cfg-head"><span>${esc(w.name)} <span style="color:var(--sub);font-weight:400">(${TYPE_LABEL[w.type]||w.type})</span></span><span style="display:flex;gap:8px"><span class="c-del" onclick="moveWidget('${w.id}',-1)">上移</span><span class="c-del" onclick="moveWidget('${w.id}',1)">下移</span><span class="c-del" onclick="toggleWidgetVis('${w.id}');openWidgets()">${w.hidden?'显示':'隐藏'}</span><span class="c-del" onclick="editWidget('${w.id}')">配置</span><span class="c-del" onclick="delWidget('${w.id}')">删除</span></span></div><div style="font-size:12px;color:var(--sub)${w.hidden?';opacity:.5':''}">数据源：${esc(getSource(w.sourceId)?getSource(w.sourceId).name:"(未绑定)")} · 位置 (${w.x},${w.y}) · ${w.w}×${w.h}</div></div>`).join("")||'<div class="empty">当前看板暂无组件。</div>'; }
 
 let srcDraft=null,curSrcId=null;
@@ -1002,7 +1052,7 @@ async function exportImage() {
       });
     }
     if (typeof html2canvas === "undefined") throw new Error("not loaded");
-    const el = await html2canvas(canvas, {backgroundColor: getComputedStyle(document.body).backgroundColor, scale: 2});
+    const el = await html2canvas(canvas, {backgroundColor: getComputedStyle(document.body).backgroundColor, scale: (state.exportScale||2)});
     const link = document.createElement("a");
     link.download = (currentDash().name || "kanban") + ".png";
     link.href = el.toDataURL("image/png");
